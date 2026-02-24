@@ -1,6 +1,7 @@
 <script setup>
 import { useImagesStore } from "./stores/imagesStore";
 import ImageDropZone from "./components/ImageDropZone.vue";
+import CropperPanel from "./components/CropperPanel.vue";
 const imagesStore = useImagesStore();
 </script>
 
@@ -11,6 +12,7 @@ const imagesStore = useImagesStore();
   <div>
     <h2>画像切り抜き</h2>
     <ImageDropZone />
+    <CropperPanel />
   </div>
 
   <div v-for="item in imagesStore.fileList" :key="item.id">
