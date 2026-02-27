@@ -16,7 +16,9 @@ const initCropper = () => {
 
   const template = `
   <cropper-canvas background>
-    <cropper-image translatable scalable action="move"></cropper-image>
+    <cropper-image translatable scalable action="move">
+    </cropper-image>
+    <cropper-handle action="move" theme-color="rgba(255, 255, 255, 0.35)"></cropper-handle>
     
     <cropper-shade></cropper-shade>
 
@@ -60,14 +62,18 @@ watch(
 
 <template>
   <div v-if="firstImage" class="cropper-container">
-    <img ref="imageElement" :src="firstImage.previewUrl" class="cropper-img"/>
-    <button>切り抜き</button>
+    <img ref="imageElement" :src="firstImage.previewUrl" class="cropper-img" />
+    <button @click="saveConfig">切り抜き</button>
   </div>
 </template>
 
 <style scoped>
-.cropper-img{
-    display: block;
-    max-width: 100%;
+.cropper-img {
+  display: block;
+  max-width: 100%;
+}
+/* 画像の上で移動用ポインターを表示 */
+cropper-image[action="move"] {
+  cursor: move; /* 十字矢印のポインター */
 }
 </style>
