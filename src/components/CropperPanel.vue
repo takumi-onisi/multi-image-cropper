@@ -46,7 +46,23 @@ const initCropper = () => {
 const saveConfig = () => {
   if (!cropper) return;
 
-  const data = cropper.getData();
+  // データを取得
+  const cropperSelection = cropper.getCropperSelection();
+  const cropperImage = cropper.getCropperImage();
+
+  if (!cropperSelection || !cropperImage) return;
+
+  // 枠の座標とサイズを取得
+  const selectionData = {
+    x: cropperSelection.x,
+    y: cropperSelection.y,
+    width: cropperSelection.width,
+    height: cropperSelection.height,
+  };
+
+  // 画像の変形状態（移動・拡大・回転）を取得
+  const imageData = cropperImage.$getTransform();
+  console.log(imageData);
 };
 
 // 一枚目の画像が読み込まれたら初期化
