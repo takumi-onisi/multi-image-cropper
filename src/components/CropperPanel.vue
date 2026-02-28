@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { useTemplateRef, ref, computed, onMounted, watch } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import Cropper from "cropperjs";
 
 const imageStore = useImagesStore();
-const imageElement = ref(null);
+const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 
 // 一枚目の画像を取得
