@@ -25,9 +25,9 @@ const initCropper = () => {
     <cropper-selection initial-coverage="0.5" movable resizable>
       <cropper-grid role="grid" bordered covered></cropper-grid>
       <cropper-crosshair centered></cropper-crosshair>
-      
+
       <cropper-handle action="move" plain></cropper-handle>
-      
+
       <cropper-handle action="n-resize"></cropper-handle>
       <cropper-handle action="e-resize"></cropper-handle>
       <cropper-handle action="s-resize"></cropper-handle>
@@ -71,14 +71,10 @@ const confirmCrop = async () => {
   if (!cropper) return;
 
   const cropperSelection = cropper.getCropperSelection();
-  if (!cropperSelection) return;
-
-  const canvas = await cropperSelection.$toCanvas();
-
-  if (!canvas) return;
-  testResultUrl.value = canvas.toDataURL("image/png");
-
   const cropperImage = cropper.getCropperImage();
+  if (!cropperSelection || !cropperImage) return;
+
+  // 代表の設定をストアに保存(これが各ファイルにデフォルトのcropConfigとして設定される)
   imageStore.setGlobalConfig({
     selection: {
       x: cropperSelection.x,
@@ -87,6 +83,48 @@ const confirmCrop = async () => {
       height: cropperSelection.height,
     },
     transform: cropperImage.$getTransform(),
+  });
+
+  const firstFileItem = imageStore.fileList[1];
+
+  const canvas = await generateCanvas(firstFileItem);
+
+  testResultUrl.value = canvas.toDataURL("image/png");
+};
+
+const generateCanvas = (fileItem) => {
+  return new Promise((resolve, reject) => {
+    if (!fileItem || !fileItem.previewUrl) {
+      return reject(new Error("ファイルデータが不正です"));
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const { selection, transform } = fileItem.cropConfig;
+        const canvas = document.createElement("canvas");
+        canvas.width = selection.width;
+        canvas.height = selection.height;
+        const ctx = canvas.getContext("2d");
+
+        ctx.save();
+        ctx.translate(-selection.x, -selection.y);
+        ctx.transform(...transform);
+        ctx.drawImage(img, 0, 0);
+        ctx.restore();
+
+        resolve(canvas);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error(`画僧の読みに失敗しました。: ${fileItem.name}`));
+    };
+
+    // 生成するcanvas用の画像をセット
+    img.src = fileItem.previewUrl;
   });
 };
 
