@@ -75,9 +75,19 @@ const confirmCrop = async () => {
 
   const canvas = await cropperSelection.$toCanvas();
 
-  if(!canvas) return;
+  if (!canvas) return;
   testResultUrl.value = canvas.toDataURL("image/png");
 
+  const cropperImage = cropper.getCropperImage();
+  imageStore.setGlobalConfig({
+    selection: {
+      x: cropperSelection.x,
+      y: cropperSelection.y,
+      width: cropperSelection.width,
+      height: cropperSelection.height,
+    },
+    transform: cropperImage.$getTransform(),
+  });
 };
 
 // 一枚目の画像が読み込まれたら初期化
