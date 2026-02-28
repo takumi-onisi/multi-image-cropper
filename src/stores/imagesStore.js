@@ -44,7 +44,7 @@ export const useImagesStore = defineStore("images", () => {
     // 画像それぞれに切り抜き用の設定を持たせる
     fileList.value.forEach((file) => {
       // 1つのファイルの切り抜き設定を編集しても他のファイルに影響が出ないようにする。
-      file.globalConfig = {
+      file.cropConfig = {
         selection: { ...newSelection },
         transform: [...newTransform],
         isModified: false,
