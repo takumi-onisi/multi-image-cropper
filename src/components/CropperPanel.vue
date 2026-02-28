@@ -85,47 +85,79 @@ const confirmCrop = async () => {
     transform: cropperImage.$getTransform(),
   });
 
-  const firstFileItem = imageStore.fileList[1];
+  const fileItem = imageStore.fileList[1]; // テスト: 2枚目の画像を切り抜く
 
-  const canvas = await generateCanvas(firstFileItem);
+  const canvas = await generateCanvas(fileItem);
 
   testResultUrl.value = canvas.toDataURL("image/png");
 };
 
-const generateCanvas = (fileItem) => {
-  return new Promise((resolve, reject) => {
-    if (!fileItem || !fileItem.previewUrl) {
-      return reject(new Error("ファイルデータが不正です"));
-    }
+const generateCanvas = async (fileItem) => {
+  if (!fileItem || !fileItem.previewUrl) {
+    return new Error("ファイルデータが不正です");
+  }
 
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const { selection, transform } = fileItem.cropConfig;
-        const canvas = document.createElement("canvas");
-        canvas.width = selection.width;
-        canvas.height = selection.height;
-        const ctx = canvas.getContext("2d");
+  // メモリ上に仮想のCropperを作成する
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-9999px"; // 画面外へ飛ばす
+  container.style.top = "0";
+  container.style.opacity = "0";
+  document.body.appendChild(container);
 
-        ctx.save();
-        ctx.translate(-selection.x, -selection.y);
-        ctx.transform(...transform);
-        ctx.drawImage(img, 0, 0);
-        ctx.restore();
+  const img = document.createElement("img");
+  img.src = fileItem.previewUrl;
+  container.appendChild(img);
+  img.onerror = () => {
+    reject(new Error(`画僧の読みに失敗しました。: ${fileItem.name}`));
+  };
 
-        resolve(canvas);
-      } catch (err) {
-        reject(err);
-      }
-    };
+  const template = `
+  <cropper-canvas background>
+    <cropper-image translatable scalable>
+    </cropper-image>
+    <cropper-handle action="move" plain></cropper-handle>
 
-    img.onerror = () => {
-      reject(new Error(`画僧の読みに失敗しました。: ${fileItem.name}`));
-    };
+    <cropper-shade></cropper-shade>
 
-    // 生成するcanvas用の画像をセット
-    img.src = fileItem.previewUrl;
+    <cropper-selection initial-coverage="0.5" movable resizable>
+      <cropper-grid role="grid" bordered covered></cropper-grid>
+      <cropper-crosshair centered></cropper-crosshair>
+
+      <cropper-handle action="move" plain></cropper-handle>
+
+      <cropper-handle action="n-resize"></cropper-handle>
+      <cropper-handle action="e-resize"></cropper-handle>
+      <cropper-handle action="s-resize"></cropper-handle>
+      <cropper-handle action="w-resize"></cropper-handle>
+      <cropper-handle action="ne-resize"></cropper-handle>
+      <cropper-handle action="nw-resize"></cropper-handle>
+      <cropper-handle action="se-resize"></cropper-handle>
+      <cropper-handle action="sw-resize"></cropper-handle>
+    </cropper-selection>
+  </cropper-canvas>
+  `;
+  const tempCropper = new Cropper(img, {
+    template,
   });
+
+  await tempCropper.$ready;
+
+  const cropperSelection = tempCropper.getCropperSelection();
+  const cropperImage = tempCropper.getCropperImage();
+
+  // 各ファイルごとの切り抜き設定を注入
+  cropperSelection.x = fileItem.cropConfig.selection.x;
+  cropperSelection.y = fileItem.cropConfig.selection.y;
+  cropperSelection.width = fileItem.cropConfig.selection.width;
+  cropperSelection.height = fileItem.cropConfig.selection.height;
+  cropperImage.$setTransform(...fileItem.cropConfig.transform);
+
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  const canvas = await cropperSelection.$toCanvas();
+
+  tempCropper.destroy();
+  return canvas;
 };
 
 // 一枚目の画像が読み込まれたら初期化
