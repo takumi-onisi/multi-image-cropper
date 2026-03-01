@@ -80,35 +80,40 @@ const generateCanvas = async (fileItem) => {
   container.style.opacity = "0";
   document.body.appendChild(container);
 
-  const img = document.createElement("img");
-  img.src = fileItem.previewUrl;
-  container.appendChild(img);
-  img.onerror = () => {
-    document.body.removeChild(container);
-    reject(new Error(`画像の読み込みに失敗しました: ${fileItem.name}`));
-  };
+  // 画像の読み込み完了を待つ Promise を作成
+  return new Promise(async (resolve, reject) => {
+    const img = document.createElement("img");
+    container.appendChild(img);
+    img.onerror = () => {
+      document.body.removeChild(container);
+      reject(new Error(`画像の読み込みに失敗しました: ${fileItem.name}`));
+    };
+    // 読み込み成功時のメインロジック
+    img.onload = async () => {
+      const tempCropper = new Cropper(img, {
+        template: CROPPER_TEMPLATE,
+      });
 
-  const tempCropper = new Cropper(img, {
-    template: CROPPER_TEMPLATE,
+      await tempCropper.$ready;
+
+      const cropperSelection = tempCropper.getCropperSelection();
+      const cropperImage = tempCropper.getCropperImage();
+
+      // 各ファイルごとの切り抜き設定を注入
+      cropperSelection.x = fileItem.cropConfig.selection.x;
+      cropperSelection.y = fileItem.cropConfig.selection.y;
+      cropperSelection.width = fileItem.cropConfig.selection.width;
+      cropperSelection.height = fileItem.cropConfig.selection.height;
+      cropperImage.$setTransform(...fileItem.cropConfig.transform);
+      
+      const canvas = await cropperSelection.$toCanvas();
+      tempCropper.destroy();
+      resolve(canvas);
+    };
+
+    // 切抜き画像の読み込み開始
+    img.src = fileItem.previewUrl;
   });
-
-  await tempCropper.$ready;
-
-  const cropperSelection = tempCropper.getCropperSelection();
-  const cropperImage = tempCropper.getCropperImage();
-
-  // 各ファイルごとの切り抜き設定を注入
-  cropperSelection.x = fileItem.cropConfig.selection.x;
-  cropperSelection.y = fileItem.cropConfig.selection.y;
-  cropperSelection.width = fileItem.cropConfig.selection.width;
-  cropperSelection.height = fileItem.cropConfig.selection.height;
-  cropperImage.$setTransform(...fileItem.cropConfig.transform);
-
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  const canvas = await cropperSelection.$toCanvas();
-
-  tempCropper.destroy();
-  return canvas;
 };
 
 // 一枚目の画像が読み込まれたら初期化
