@@ -84,7 +84,8 @@ const generateCanvas = async (fileItem) => {
   img.src = fileItem.previewUrl;
   container.appendChild(img);
   img.onerror = () => {
-    reject(new Error(`画僧の読みに失敗しました。: ${fileItem.name}`));
+    document.body.removeChild(container);
+    reject(new Error(`画像の読み込みに失敗しました: ${fileItem.name}`));
   };
 
   const tempCropper = new Cropper(img, {
