@@ -90,27 +90,35 @@ const generateCanvas = async (fileItem) => {
     };
     // 読み込み成功時のメインロジック
     img.onload = async () => {
-      const tempCropper = new Cropper(img, {
-        template: CROPPER_TEMPLATE,
-      });
+      try {
+        const tempCropper = new Cropper(img, {
+          template: CROPPER_TEMPLATE,
+        });
 
-      await tempCropper.$ready;
+        await tempCropper.$ready;
 
-      const cropperSelection = tempCropper.getCropperSelection();
-      const cropperImage = tempCropper.getCropperImage();
+        const cropperSelection = tempCropper.getCropperSelection();
+        const cropperImage = tempCropper.getCropperImage();
 
-      // 各ファイルごとの切り抜き設定を注入
-      cropperSelection.x = fileItem.cropConfig.selection.x;
-      cropperSelection.y = fileItem.cropConfig.selection.y;
-      cropperSelection.width = fileItem.cropConfig.selection.width;
-      cropperSelection.height = fileItem.cropConfig.selection.height;
-      cropperImage.$setTransform(...fileItem.cropConfig.transform);
-      // 切抜き
-      const canvas = await cropperSelection.$toCanvas();
-      // 正常終了：後片付け
-      tempCropper.destroy();
-      document.body.removeChild(container);
-      resolve(canvas);
+        // 各ファイルごとの切り抜き設定を注入
+        cropperSelection.x = fileItem.cropConfig.selection.x;
+        cropperSelection.y = fileItem.cropConfig.selection.y;
+        cropperSelection.width = fileItem.cropConfig.selection.width;
+        cropperSelection.height = fileItem.cropConfig.selection.height;
+        cropperImage.$setTransform(...fileItem.cropConfig.transform);
+        // 切抜き
+        const canvas = await cropperSelection.$toCanvas();
+        // 正常終了：後片付け
+        tempCropper.destroy();
+        document.body.removeChild(container);
+        resolve(canvas);
+      } catch (err) {
+        // 処理中の予期せぬエラー
+        // 作業用の要素を削除する
+        if (container.parentNode) document.body.removeChild(container);
+        // エラーを返してawaitで待っているプログラムが止まらないようにする
+        reject(err);
+      }
     };
 
     // 切抜き画像の読み込み開始
