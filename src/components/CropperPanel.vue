@@ -2,6 +2,8 @@
 import { useTemplateRef, ref, computed, onMounted, watch } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import { CROPPER_TEMPLATE } from "../constants/cropperTemplate";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import Cropper from "cropperjs";
 
 const imageStore = useImagesStore();
@@ -146,7 +148,49 @@ const processAll = async () => {
   }
 
   console.log("全件の処理が完了しました", processedCanvases);
+
+  // ZIP化を実行
+  await downloadAsZip(processedCanvases);
+  // メモリ解放：Canvas要素は巨大なので使い終わったらクリアするのが安全
+  processedCanvases.forEach(item => {
+    item.canvas.width = 0;
+    item.canvas.height = 0;
+  });
 };
+
+/**
+ * processedCanvases: { name: string, canvas: HTMLCanvasElement }[]
+ */
+const downloadAsZip = async (processedCanvases) => {
+  if (processedCanvases.length === 0) return;
+
+  const zip = new JSZip();
+
+  // 各CanvasをBlobに変換してZIPに追加
+  const promises = processedCanvases.map(async (item) => {
+    return new Promise((resolve) => {
+      // toBlobを使ってPNG形式のバイナリを取り出す
+      item.canvas.toBlob((blob) => {
+        // 拡張子を整理（元の名前がimage.jpgでも、切り抜き後はimage.pngにする）
+        const fileName = item.name.replace(/\.[^/.]+$/, "") + ".png";
+        
+        // ZIPファイル構造の中にファイルを追加
+        zip.file(fileName, blob);
+        resolve();
+      }, "image/png");
+    });
+  });
+
+  // 全てのBlob変換が終わるのを待つ
+  await Promise.all(promises);
+
+  // ZIPデータを生成（圧縮レベルなども設定可能）
+  const zipContent = await zip.generateAsync({ type: "blob" });
+
+  // ブラウザのダウンロード機能を実行
+  saveAs(zipContent, "cropped_images.zip");
+};
+
 
 // 一枚目の画像が読み込まれたら初期化
 watch(
