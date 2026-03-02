@@ -60,11 +60,7 @@ const confirmCrop = async () => {
     transform: cropperImage.$getTransform(),
   });
 
-  const fileItem = imageStore.fileList[1]; // テスト: 2枚目の画像を切り抜く
-
-  const canvas = await generateCanvas(fileItem);
-
-  testResultUrl.value = canvas.toDataURL("image/png");
+  processAll();
 };
 
 const generateCanvas = async (fileItem) => {
@@ -124,6 +120,32 @@ const generateCanvas = async (fileItem) => {
     // 切抜き画像の読み込み開始
     img.src = fileItem.previewUrl;
   });
+};
+
+const processAll = async () => {
+  const files = imageStore.fileList;
+  const processedCanvases = [];
+
+  for (const file of files) {
+    try {
+      // 1枚ずつ順番に await
+      const canvas = await generateCanvas(file);
+
+      // 成功したら配列に保存（またはZIPに追加）
+      processedCanvases.push({
+        name: file.name,
+        canvas: canvas,
+      });
+
+      console.log(`成功: ${file.name}`);
+    } catch (err) {
+      // reject された場合でも、ここでキャッチすればループは止まらない
+      console.error(`失敗: ${file.name} - 理由: ${err.message}`);
+      // 必要に応じてユーザーに「失敗したファイルがある」ことを知らせるフラグを立てる
+    }
+  }
+
+  console.log("全件の処理が完了しました", processedCanvases);
 };
 
 // 一枚目の画像が読み込まれたら初期化
