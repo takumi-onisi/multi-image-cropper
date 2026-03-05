@@ -15,6 +15,10 @@ const imagesStore = useImagesStore();
     <CropperPanel />
   </div>
 
+<div v-for="item in imagesStore.fileList" :key="item.id">
+    <img :src="item.previewUrl" />
+    <p>{{ item.name }}</p>
+  </div>
 </template>
 
 <style scoped></style>
