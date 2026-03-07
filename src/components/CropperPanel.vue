@@ -36,6 +36,17 @@ const initCropper = () => {
   if (!imageElement.value) return;
 
   cropper = new Cropper(imageElement.value, { template: CROPPER_TEMPLATE });
+
+  cropper.getCropperSelection().addEventListener("change", () => {
+    const selection = cropper.getCropperSelection();
+    if (selection) {
+      // 画面表示用に整数に丸める
+      rect.value.x = Math.round(selection.x);
+      rect.value.y = Math.round(selection.y);
+      rect.value.width = Math.round(selection.width);
+      rect.value.height = Math.round(selection.height);
+    }
+  });
 };
 
 const saveConfig = () => {
@@ -142,7 +153,7 @@ const processAll = async () => {
   // ZIP化を実行
   await downloadAsZip(processedCanvases);
   // メモリ解放：Canvas要素は巨大なので使い終わったらクリアするのが安全
-  processedCanvases.forEach(item => {
+  processedCanvases.forEach((item) => {
     item.canvas.width = 0;
     item.canvas.height = 0;
   });
@@ -163,7 +174,7 @@ const downloadAsZip = async (processedCanvases) => {
       item.canvas.toBlob((blob) => {
         // 拡張子を整理（元の名前がimage.jpgでも、切り抜き後はimage.pngにする）
         const fileName = item.name.replace(/\.[^/.]+$/, "") + ".png";
-        
+
         // ZIPファイル構造の中にファイルを追加
         zip.file(fileName, blob);
         resolve();
@@ -181,7 +192,6 @@ const downloadAsZip = async (processedCanvases) => {
   saveAs(zipContent, "cropped_images.zip");
 };
 
-
 // 一枚目の画像が読み込まれたら初期化
 watch(
   firstImage,
@@ -194,25 +204,32 @@ watch(
 </script>
 
 <template>
-
   <div class="property-bar">
-  <div class="input-group">
-    <label>X:</label>
-    <input type="number" v-model.number="rect.x" @input="updateSelection">
+    <div class="input-group">
+      <label>X:</label>
+      <input type="number" v-model.number="rect.x" @input="updateSelection" />
+    </div>
+    <div class="input-group">
+      <label>Y:</label>
+      <input type="number" v-model.number="rect.y" @input="updateSelection" />
+    </div>
+    <div class="input-group">
+      <label>幅:</label>
+      <input
+        type="number"
+        v-model.number="rect.width"
+        @input="updateSelection"
+      />
+    </div>
+    <div class="input-group">
+      <label>高さ:</label>
+      <input
+        type="number"
+        v-model.number="rect.height"
+        @input="updateSelection"
+      />
+    </div>
   </div>
-  <div class="input-group">
-    <label>Y:</label>
-    <input type="number" v-model.number="rect.y" @input="updateSelection">
-  </div>
-  <div class="input-group">
-    <label>幅:</label>
-    <input type="number" v-model.number="rect.width" @input="updateSelection">
-  </div>
-  <div class="input-group">
-    <label>高さ:</label>
-    <input type="number" v-model.number="rect.height" @input="updateSelection">
-  </div>
-</div>
 
   <div v-if="firstImage" class="cropper-container">
     <img ref="imageElement" :src="firstImage.previewUrl" class="cropper-img" />
