@@ -36,6 +36,8 @@ export const useImagesStore = defineStore("images", () => {
   const setGlobalConfig = (config) => {
     const newSelection = { ...config.selection };
     const newTransform = [...config.transform];
+    const newBaseSize = { ...config.baseSize };
+    
 
     // グローバル設定(マスター)を更新
     globalConfig.value.selection = newSelection;
@@ -47,6 +49,7 @@ export const useImagesStore = defineStore("images", () => {
       file.cropConfig = {
         selection: { ...newSelection },
         transform: [...newTransform],
+        baseSize: { ...newBaseSize },
         isModified: false,
       };
     });

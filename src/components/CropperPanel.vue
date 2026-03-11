@@ -79,6 +79,10 @@ const confirmCrop = async () => {
   const cropperImage = cropper.getCropperImage();
   if (!cropperSelection || !cropperImage) return;
 
+  const rect = cropperImage.getBoundingClientRect();
+  const baseImageWidth = rect.width;
+  const baseImageHeight = rect.height;
+
   // 代表の設定をストアに保存(これが各ファイルにデフォルトのcropConfigとして設定される)
   imageStore.setGlobalConfig({
     selection: {
@@ -88,6 +92,7 @@ const confirmCrop = async () => {
       height: cropperSelection.height,
     },
     transform: cropperImage.$getTransform(),
+    baseSize: { width: baseImageWidth, height: baseImageHeight}
   });
 
   processAll();
@@ -220,9 +225,5 @@ watch(
 .cropper-img {
   display: block;
   max-width: 100%;
-}
-/* 画像の上で移動用ポインターを表示 */
-cropper-image[action="move"] {
-  cursor: move; /* 十字矢印のポインター */
 }
 </style>
