@@ -32,20 +32,11 @@ export async function performCropping(imgElement, cropConfig) {
   const targetWidth = Math.round(cropConfig.selection.width * S);
   const targetHeight = Math.round(cropConfig.selection.height * S);
 
-  console.log("--- デバッグ情報 ---");
-  console.log("zoomScale:", zoomScale);
-  console.log("Scale Factor (S):", S);
-  console.log("Config Selection:", cropConfig.selection);
-  console.log("Target Pixels:", { targetWidth, targetHeight });
-  console.log("Original Size:", { w: imgElement.naturalWidth, h: imgElement.naturalHeight });
-
   // 5. 切り抜き実行（ここで計算値を強制適用）
   const canvas = await selection.$toCanvas({
     width: targetWidth,
-    height: targetHeight
+    height: targetHeight,
   });
-
-  console.log("最終出力サイズ:", { w: canvas.width, h: canvas.height });
 
   tempCropper.destroy();
   return canvas;
