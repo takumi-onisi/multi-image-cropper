@@ -92,7 +92,6 @@ const confirmCrop = async () => {
       height: cropperSelection.height,
     },
     transform: cropperImage.$getTransform(),
-    baseSize: { width: baseImageWidth, height: baseImageHeight },
   });
 
   processAll();
