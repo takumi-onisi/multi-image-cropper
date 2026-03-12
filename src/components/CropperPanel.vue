@@ -183,36 +183,54 @@ watch(
 </script>
 
 <template>
-  <div class="property-bar">
-    <div class="input-group">
-      <label>X:</label>
-      <input type="number" v-model.number="rect.x" @input="updateSelection" />
-    </div>
-    <div class="input-group">
-      <label>Y:</label>
-      <input type="number" v-model.number="rect.y" @input="updateSelection" />
-    </div>
-    <div class="input-group">
-      <label>幅:</label>
-      <input
-        type="number"
-        v-model.number="rect.width"
-        @input="updateSelection"
-      />
-    </div>
-    <div class="input-group">
-      <label>高さ:</label>
-      <input
-        type="number"
-        v-model.number="rect.height"
-        @input="updateSelection"
-      />
-    </div>
-  </div>
-
   <div v-if="firstImage" class="cropper-container">
-    <img ref="imageElement" :src="firstImage.previewUrl" class="cropper-img" />
-    <button @click="confirmCrop">設定を確定してテスト切り抜き</button>
+    <div class="cropper-wrapper">
+      <div class="property-bar">
+        <div class="input-group">
+          <label>X:</label>
+          <input
+            type="number"
+            v-model.number="rect.x"
+            @input="updateSelection"
+          />
+        </div>
+        <div class="input-group">
+          <label>Y:</label>
+          <input
+            type="number"
+            v-model.number="rect.y"
+            @input="updateSelection"
+          />
+        </div>
+        <div class="input-group">
+          <label>幅:</label>
+          <input
+            type="number"
+            v-model.number="rect.width"
+            @input="updateSelection"
+          />
+        </div>
+        <div class="input-group">
+          <label>高さ:</label>
+          <input
+            type="number"
+            v-model.number="rect.height"
+            @input="updateSelection"
+          />
+        </div>
+      </div>
+      <img
+        ref="imageElement"
+        :src="firstImage.previewUrl"
+        class="cropper-img"
+      />
+
+      <div class="button-area">
+        <button class="confirm-btn" @click="confirmCrop">
+          設定を確定して切り抜き
+        </button>
+      </div>
+    </div>
   </div>
 
   <div v-if="testResultUrl" class="test-preview">
@@ -222,6 +240,19 @@ watch(
 </template>
 
 <style scoped>
+.cropper-container {
+  display: flex;
+  justify-content: center; /* 横方向の中央寄せ */
+  padding: 20px;
+}
+
+.cropper-wrapper {
+  display: flex;
+  flex-direction: column; /* 縦に並べる */
+  align-items: center; /* 子要素を中央寄せ */
+  gap: 16px; /* キャンバスとボタンの隙間 */
+}
+
 .cropper-img {
   display: block;
   max-width: 100%;
