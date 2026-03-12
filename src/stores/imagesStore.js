@@ -37,7 +37,6 @@ export const useImagesStore = defineStore("images", () => {
     const newSelection = { ...config.selection };
     const newTransform = [...config.transform];
     const newBaseSize = { ...config.baseSize };
-    
 
     // グローバル設定(マスター)を更新
     globalConfig.value.selection = newSelection;

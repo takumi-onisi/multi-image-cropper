@@ -1,5 +1,5 @@
 <script setup>
-import { useImagesStore } from '../stores/imagesStore';
+import { useImagesStore } from "../stores/imagesStore";
 const store = useImagesStore();
 
 const handleDrop = (e) => {
@@ -12,10 +12,10 @@ const handleDrop = (e) => {
 </script>
 
 <template>
-  <div 
-    @dragover.prevent 
+  <div
+    @dragover.prevent
     @drop.prevent="handleDrop"
-    style="border: 2px dashed #000; padding: 50px; text-align: center;"
+    style="border: 2px dashed #000; padding: 50px; text-align: center"
   >
     ここに画像をドロップしてください
   </div>

@@ -8,7 +8,10 @@ vi.mock("cropperjs", () => {
 
   // 共有する状態オブジェクト
   const sharedSelection = {
-    x: 0, y: 0, width: 0, height: 0,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
     $toCanvas: vi.fn().mockResolvedValue(document.createElement("canvas")),
   };
 
