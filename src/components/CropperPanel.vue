@@ -242,19 +242,40 @@ watch(
 <style scoped>
 .cropper-container {
   display: flex;
-  justify-content: center; /* 横方向の中央寄せ */
+  justify-content: center;
   padding: 20px;
 }
 
 .cropper-wrapper {
   display: flex;
-  flex-direction: column; /* 縦に並べる */
-  align-items: center; /* 子要素を中央寄せ */
-  gap: 16px; /* キャンバスとボタンの隙間 */
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .cropper-img {
-  display: block;
-  max-width: 100%;
+  display: none;
+}
+
+:deep(cropper-canvas) {
+  margin: auto;
+  width: 50vw !important;
+  height: 50vw !important;
+}
+
+.button-area {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 </style>
