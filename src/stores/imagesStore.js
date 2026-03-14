@@ -7,8 +7,6 @@ export const useImagesStore = defineStore("images", () => {
   const globalConfig = ref({
     selection: { x: 0, y: 0, width: 0, height: 0 },
     transform: [1, 0, 0, 1, 0, 0],
-    aspectRatio: null,
-    format: "png",
   });
 
   const addFiles = (files) => {
@@ -40,7 +38,6 @@ export const useImagesStore = defineStore("images", () => {
     const targetConfig = file?.cropConfig || globalConfig.value;
 
     return {
-      ...targetConfig,
       selection: { ...targetConfig.selection },
       transform: [...targetConfig.transform],
     };
