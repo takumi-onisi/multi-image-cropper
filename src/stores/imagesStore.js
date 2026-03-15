@@ -8,6 +8,7 @@ export const useImagesStore = defineStore("images", () => {
     selection: { x: 0, y: 0, width: 0, height: 0 },
     transform: [1, 0, 0, 1, 0, 0],
   });
+  const isIndividualMode = ref(false);
 
   const addFiles = (files) => {
     // files は FileList という特殊な型なので、Array.fromで配列化が必要
@@ -46,6 +47,14 @@ export const useImagesStore = defineStore("images", () => {
   // グローバル設定のコピーを返す。(読み取り専用)
   const getGlobalConfig = computed(() => ({ ...globalConfig.value }));
 
+  const updatePreviewConfig = (previewUrl, config) => {
+    if (isIndividualMode.value) {
+      setFileConfig(previewUrl, config);
+    } else {
+      setGlobalConfig(config);
+    }
+  };
+
   const setGlobalConfig = (config) => {
     // 渡されたconfigが必要な要件を満たしていることを確認
     assertCropConfig(config);
@@ -76,6 +85,8 @@ export const useImagesStore = defineStore("images", () => {
     fileList,
     addFiles,
     clearFiles,
+    isIndividualMode,
+    updatePreviewConfig,
     getFileCropConfig,
     getGlobalConfig,
     setGlobalConfig,

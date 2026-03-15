@@ -1,52 +1,71 @@
 <script setup>
-import { useTemplateRef, ref, computed, onMounted, watch } from "vue";
+import { useTemplateRef, ref, computed, onMounted, watch, nextTick } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import { CROPPER_TEMPLATE } from "../constants/cropperTemplate";
 import Cropper from "cropperjs";
 import { performCropping, convertToZipItem } from "../utils/imageProcessor";
 import { downloadFilesAsZip } from "../utils/zip";
+import PropertyBar from "../components/PropertyBar.vue";
 
 const imageStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
 let cropper = null;
+// cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
+let isInternalSync = false;
 
 // 一枚目の画像を取得
 const firstImage = computed(() => imageStore.fileList[0]);
-
-const rect = ref({ x: 0, y: 0, width: 0, height: 0 });
-
-// 2. 数値入力から Cropper（枠）へ
-const updateSelection = () => {
-  const selection = cropper.getCropperSelection();
-  if (selection) {
-    // フォームの値をCropperに代入
-    selection.x = rect.value.x;
-    selection.y = rect.value.y;
-    selection.width = rect.value.width;
-    selection.height = rect.value.height;
-
-    // Cropper v2の重要なメソッド：プロパティの変更を画面に強制反映させる
-    selection.$change();
-  }
-};
 
 const initCropper = () => {
   if (cropper) cropper.destroy();
   if (!imageElement.value) return;
 
   cropper = new Cropper(imageElement.value, { template: CROPPER_TEMPLATE });
-
+  // Cropper側の変更をストアに送る
   cropper.getCropperSelection().addEventListener("change", () => {
+    if (isInternalSync) return; // watch経由の更新なら無視する
+
     const selection = cropper.getCropperSelection();
-    if (selection) {
-      // 画面表示用に整数に丸める
-      rect.value.x = Math.round(selection.x);
-      rect.value.y = Math.round(selection.y);
-      rect.value.width = Math.round(selection.width);
-      rect.value.height = Math.round(selection.height);
-    }
+    const transform = cropper.getCropperImage().$getTransform();
+
+    isInternalSync = true;
+    imageStore.updatePreviewConfig(firstImage.previewUrl, {
+      selection: {
+        x: selection.x,
+        y: selection.y,
+        width: selection.width,
+        height: selection.height,
+      },
+      transform: transform,
+    });
+
+    // ストアへの反映完了後にフラグを下ろす
+    nextTick(() => {
+      isInternalSync = false;
+    });
   });
 };
+
+// 2. ストアの変更をCropperに反映する
+watch(
+  () => imageStore.getFileCropConfig(firstImage.previewUrl),
+  (newConfig) => {
+    if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
+
+    const selection = cropper.getCropperSelection();
+
+    isInternalSync = true;
+    // 座標の反映
+    Object.assign(selection, newConfig.selection);
+
+    selection.$change(); // 画面更新をキック
+
+    nextTick(() => {
+      isInternalSync = false;
+    });
+  },
+  { deep: true },
+);
 
 const saveConfig = () => {
   if (!cropper) return;
@@ -186,40 +205,13 @@ watch(
 <template>
   <div v-if="firstImage" class="cropper-container">
     <div class="cropper-wrapper">
-      <div class="property-bar">
-        <div class="input-group">
-          <label>X:</label>
-          <input
-            type="number"
-            v-model.number="rect.x"
-            @input="updateSelection"
-          />
-        </div>
-        <div class="input-group">
-          <label>Y:</label>
-          <input
-            type="number"
-            v-model.number="rect.y"
-            @input="updateSelection"
-          />
-        </div>
-        <div class="input-group">
-          <label>幅:</label>
-          <input
-            type="number"
-            v-model.number="rect.width"
-            @input="updateSelection"
-          />
-        </div>
-        <div class="input-group">
-          <label>高さ:</label>
-          <input
-            type="number"
-            v-model.number="rect.height"
-            @input="updateSelection"
-          />
-        </div>
-      </div>
+      <PropertyBar
+        :config="imageStore.getFileCropConfig(firstImage.previewUrl)"
+        @update:config="
+          (newConfig) =>
+            imageStore.updatePreviewConfig(firstImage.previewUrl, newConfig)
+        "
+      />
       <img
         ref="imageElement"
         :src="firstImage.previewUrl"
