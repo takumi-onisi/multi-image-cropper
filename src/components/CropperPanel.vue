@@ -67,40 +67,12 @@ watch(
   { deep: true },
 );
 
-const saveConfig = () => {
-  if (!cropper) return;
-
-  // データを取得
-  const cropperSelection = cropper.getCropperSelection();
-  const cropperImage = cropper.getCropperImage();
-
-  if (!cropperSelection || !cropperImage) return;
-
-  // 枠の座標とサイズを取得
-  const selectionData = {
-    x: cropperSelection.x,
-    y: cropperSelection.y,
-    width: cropperSelection.width,
-    height: cropperSelection.height,
-  };
-
-  // 画像の変形状態（移動・拡大・回転）を取得
-  const imageData = cropperImage.$getTransform();
-  console.log(imageData);
-};
-
-const testResultUrl = ref(null);
-
 const confirmCrop = async () => {
   if (!cropper) return;
 
   const cropperSelection = cropper.getCropperSelection();
   const cropperImage = cropper.getCropperImage();
   if (!cropperSelection || !cropperImage) return;
-
-  const rect = cropperImage.getBoundingClientRect();
-  const baseImageWidth = rect.width;
-  const baseImageHeight = rect.height;
 
   // 代表の設定をストアに保存(これが各ファイルにデフォルトのcropConfigとして設定される)
   imageStore.setGlobalConfig({
@@ -224,11 +196,6 @@ watch(
         </button>
       </div>
     </div>
-  </div>
-
-  <div v-if="testResultUrl" class="test-preview">
-    <h3>テスト切り抜き結果:</h3>
-    <img :src="testResultUrl" style="border: 2px solid #2ecc71" />
   </div>
 </template>
 
