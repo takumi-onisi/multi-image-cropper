@@ -1,27 +1,27 @@
 /**
- * canvas基準の座標(cropper.jsデフォルト値)から画像基準の座標へ変換する
+ * 表示座標(View)から画像オリジナル座標(Source)へ変換する
+ * @param {object} viewRect - {x, y, width, height} (Canvas基準)
+ * @param {object} params - { offset: {x, y}, scale: {x, y} }
  */
-export function canvasToImageSpace(selection, params) {
-  const { imageX, imageY, scaleX, scaleY } = params;
-
+export function convertViewToSource(viewRect, { offset, scale }) {
   return {
-    x: Math.round((selection.x - imageX) / scaleX), // 画像の左端を起点とする
-    y: Math.round((selection.y - imageY) / scaleY), // 画像の上端を起点とする
-    width: Math.round(selection.width / scaleX), // 画像のオリジナル解像度に基づいたピクセル値
-    height: Math.round(selection.height / scaleY), // 画像のオリジナル解像度に基づいたピクセル値
+    x: Math.round((viewRect.x - offset.x) / scale.x),
+    y: Math.round((viewRect.y - offset.y) / scale.y),
+    width: Math.round(viewRect.width / scale.x),
+    height: Math.round(viewRect.height / scale.y),
   };
 }
 
 /**
- * 画像基準の座標からcanvas基準の座標(cropper.jsデフォルト値)へ変換する
+ * 画像オリジナル座標(Source)から表示座標(View)へ変換する
+ * @param {object} sourceRect - {x, y, width, height} (画像基準)
+ * @param {object} params - { offset: {x, y}, scale: {x, y} }
  */
-export function imageToCanvasSpace(selection, params) {
-  const { imageX, imageY, scaleX, scaleY } = params;
-
+export function convertSourceToView(sourceRect, { offset, scale }) {
   return {
-    x: selection.x * scaleX + imageX, // canvasの左端を起点とする(cropper.jsデフォルト)
-    y: selection.y * scaleY + imageY, // canvasの上端を起点とする(cropper.jsデフォルト)
-    width: selection.width * scaleX, // cssでの表示サイズに基づいたピクセル値(cropper.jsデフォルト)
-    height: selection.height * scaleY, // cssでの表示サイズに基づいたピクセル値(cropper.jsデフォルト)
+    x: sourceRect.x * scale.x + offset.x,
+    y: sourceRect.y * scale.y + offset.y,
+    width: sourceRect.width * scale.x,
+    height: sourceRect.height * scale.y,
   };
 }

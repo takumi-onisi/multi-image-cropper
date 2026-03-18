@@ -7,8 +7,8 @@ import { performCropping, convertToZipItem } from "../utils/imageProcessor";
 import { downloadFilesAsZip } from "../utils/zip";
 import PropertyBar from "../components/PropertyBar.vue";
 import {
-  canvasToImageSpace,
-  imageToCanvasSpace,
+  convertViewToSource,
+  convertSourceToView,
 } from "../utils/pixelConverter";
 
 const imageStore = useImagesStore();
@@ -177,46 +177,58 @@ watch(
   { immediate: true },
 );
 
-// ストア(Canvas基準) -> プロパティバー(画像基準)
+// ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
   const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
   if (!cropper || !rawConfig.transform) return rawConfig;
-  const params = getCropperParams(cropper);
+
+  const context = getTransformationContext(cropper);
 
   return {
     ...rawConfig,
-    selection: canvasToImageSpace(rawConfig.selection, params),
+    selection: convertViewToSource(rawConfig.selection, context),
   };
 });
 
-// プロパティバー(画像基準) -> ストア保存用(Canvas基準)
+// プロパティバー(Source基準) -> ストア(View基準)
 const handleUpdateConfig = (newConfig) => {
   if (!cropper) return;
-  const params = getCropperParams(cropper);
-  const convertedConfig = imageToCanvasSpace(newConfig.selection, params);
-  // 入力されたオリジナル基準の値を、Canvas基準に変換してストアへ
+
+  const context = getTransformationContext(cropper);
+
+  // プロパティバーから入力された「画像基準」の値を「表示基準」に変換してストアへ
+  const viewSelection = convertSourceToView(newConfig.selection, context);
+
   imageStore.updatePreviewConfig(firstImage.previewUrl, {
-    ...newConfig,
-    selection: convertedConfig,
+    ...newConfig, // transformなどはそのまま保持
+    selection: viewSelection,
   });
 };
 
-function getCropperParams(cropper) {
+/**
+ * 現在のCropperの状態から変換用のパラメータを抽出する
+ */
+function getTransformationContext(cropper) {
   const container = cropper.container;
-
-  const canvas = container.querySelector("cropper-canvas");
-  const image = container.querySelector("cropper-image");
-
-  const imageRect = image.getBoundingClientRect();
-  const canvasRect = canvas.getBoundingClientRect();
-
+  const canvasRect = container
+    .querySelector("cropper-canvas")
+    .getBoundingClientRect();
+  const imageRect = container
+    .querySelector("cropper-image")
+    .getBoundingClientRect();
   const transform = cropper.getCropperImage().$getTransform();
 
   return {
-    imageX: imageRect.left - canvasRect.left,
-    imageY: imageRect.top - canvasRect.top,
-    scaleX: transform[0],
-    scaleY: transform[3],
+    // 画像の左上端がCanvasの左上端からどれだけ離れているか
+    offset: {
+      x: imageRect.left - canvasRect.left,
+      y: imageRect.top - canvasRect.top,
+    },
+    // 現在の表示倍率
+    scale: {
+      x: transform[0],
+      y: transform[3],
+    },
   };
 }
 </script>
