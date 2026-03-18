@@ -1,44 +1,22 @@
 /**
  * canvas基準の座標(cropper.jsデフォルト値)から画像基準の座標へ変換する
  */
-export function canvasToImageSpace(selection, transform) {
-  const scaleX = transform[0];
-  const scaleY = transform[3];
-
-  const Sx = 1 / scaleX;
-  const Sy = 1 / scaleY;
-
-  const imageX = transform[4];
-  const imageY = transform[5];
-
-  console.log(`
-    selectionX = selection.x = ${selection.x},
-    selectionY = selection.y = ${selection.y},
-    scaleX = transform[0] = ${scaleX},
-    scaleY = transform[3] = ${scaleY},
-    Sx = 1 / scaleX = ${Sx},
-    Sy = 1 / scaleY = ${Sy},
-    imageX = transform[4] = ${imageX},
-    imageY = transform[5] = ${imageY}
-    `);
+export function canvasToImageSpace(selection, params) {
+  const { imageX, imageY, scaleX, scaleY } = params;
 
   return {
-    x: Math.round((selection.x - imageX) * Sx), // 画像の左端を起点とする
-    y: Math.round((selection.y - imageY) * Sy), // 画像の上端を起点とする
-    width: Math.round(selection.width * Sx), // 画像のオリジナル解像度に基づいたピクセル値
-    height: Math.round(selection.height * Sy), // 画像のオリジナル解像度に基づいたピクセル値
+    x: Math.round((selection.x - imageX) / scaleX), // 画像の左端を起点とする
+    y: Math.round((selection.y - imageY) / scaleY), // 画像の上端を起点とする
+    width: Math.round(selection.width / scaleX), // 画像のオリジナル解像度に基づいたピクセル値
+    height: Math.round(selection.height / scaleY), // 画像のオリジナル解像度に基づいたピクセル値
   };
 }
 
 /**
  * 画像基準の座標からcanvas基準の座標(cropper.jsデフォルト値)へ変換する
  */
-export function imageToCanvasSpace(selection, transform) {
-  const scaleX = transform[0];
-  const scaleY = transform[3];
-
-  const imageX = transform[4];
-  const imageY = transform[5];
+export function imageToCanvasSpace(selection, params) {
+  const { imageX, imageY, scaleX, scaleY } = params;
 
   return {
     x: selection.x * scaleX + imageX, // canvasの左端を起点とする(cropper.jsデフォルト)

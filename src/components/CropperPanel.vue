@@ -6,6 +6,10 @@ import Cropper from "cropperjs";
 import { performCropping, convertToZipItem } from "../utils/imageProcessor";
 import { downloadFilesAsZip } from "../utils/zip";
 import PropertyBar from "../components/PropertyBar.vue";
+import {
+  canvasToImageSpace,
+  imageToCanvasSpace,
+} from "../utils/pixelConverter";
 
 const imageStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -172,17 +176,57 @@ watch(
   },
   { immediate: true },
 );
+
+// ストア(Canvas基準) -> プロパティバー(画像基準)
+const displayConfig = computed(() => {
+  const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
+  if (!cropper || !rawConfig.transform) return rawConfig;
+  const params = getCropperParams(cropper);
+
+  return {
+    ...rawConfig,
+    selection: canvasToImageSpace(rawConfig.selection, params),
+  };
+});
+
+// プロパティバー(画像基準) -> ストア保存用(Canvas基準)
+const handleUpdateConfig = (newConfig) => {
+  if (!cropper) return;
+  const params = getCropperParams(cropper);
+  const convertedConfig = imageToCanvasSpace(newConfig.selection, params);
+  // 入力されたオリジナル基準の値を、Canvas基準に変換してストアへ
+  imageStore.updatePreviewConfig(firstImage.previewUrl, {
+    ...newConfig,
+    selection: convertedConfig,
+  });
+};
+
+function getCropperParams(cropper) {
+  const container = cropper.container;
+
+  const canvas = container.querySelector("cropper-canvas");
+  const image = container.querySelector("cropper-image");
+
+  const imageRect = image.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+
+  const transform = cropper.getCropperImage().$getTransform();
+
+  return {
+    imageX: imageRect.left - canvasRect.left,
+    imageY: imageRect.top - canvasRect.top,
+    scaleX: transform[0],
+    scaleY: transform[3],
+  };
+}
 </script>
 
 <template>
   <div v-if="firstImage" class="cropper-container">
     <div class="cropper-wrapper">
       <PropertyBar
-        :config="imageStore.getFileCropConfig(firstImage.previewUrl)"
-        @update:config="
-          (newConfig) =>
-            imageStore.updatePreviewConfig(firstImage.previewUrl, newConfig)
-        "
+        :config="displayConfig"
+        @update:config="handleUpdateConfig"
       />
       <img
         ref="imageElement"
