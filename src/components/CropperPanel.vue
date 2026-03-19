@@ -26,7 +26,7 @@ const initCropper = () => {
 
   cropper = new Cropper(imageElement.value, { template: CROPPER_TEMPLATE });
   // Cropper側の変更をストアに送る
-  cropper.getCropperSelection().addEventListener("change", () => {
+  const syncToStore = () => {
     if (isInternalSync) return; // watch経由の更新なら無視する
 
     const selection = cropper.getCropperSelection();
@@ -47,7 +47,9 @@ const initCropper = () => {
     nextTick(() => {
       isInternalSync = false;
     });
-  });
+  };
+  cropper.getCropperSelection().addEventListener("change", syncToStore);
+  cropper.getCropperImage().addEventListener("transform", syncToStore);
 };
 
 // 2. ストアの変更をCropperに反映する
