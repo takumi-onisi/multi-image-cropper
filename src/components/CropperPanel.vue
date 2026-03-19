@@ -197,15 +197,29 @@ const displayConfig = computed(() => {
 
 // プロパティバー(Source基準) -> ストア(View基準)
 const handleUpdateConfig = (newConfig) => {
+  // A. 環境ガード: 計算に必要なインスタンスがなければ何もしない
   if (!cropper) return;
 
+  // B. 値のバリデーション:
+  // ユーザーが入力中の「空文字」や、予期せぬ NaN をチェック
+  const s = newConfig.selection;
+  const isInvalid = [s.x, s.y, s.width, s.height].some(
+    (val) => val === "" || val === null || isNaN(val),
+  );
+
+  // 異常な入力の場合は、ストアを更新せずに現在の状態をキープする
+  if (isInvalid) return;
+
+  // C. コンテキスト取得
   const context = getTransformationContext(cropper);
+  if (!context) return;
 
-  // プロパティバーから入力された「画像基準」の値を「表示基準」に変換してストアへ
-  const viewSelection = convertSourceToView(newConfig.selection, context);
+  // D. 座標変換 (画像基準 -> 表示基準)
+  const viewSelection = convertSourceToView(s, context);
 
+  // E. ストア更新 (既存の transform を維持しつつ、計算済みの座標を適用)
   imageStore.updatePreviewConfig(firstImage.previewUrl, {
-    ...newConfig, // transformなどはそのまま保持
+    ...newConfig, // transform 等を保持
     selection: viewSelection,
   });
 };
