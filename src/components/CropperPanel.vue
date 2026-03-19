@@ -6,6 +6,10 @@ import Cropper from "cropperjs";
 import { performCropping, convertToZipItem } from "../utils/imageProcessor";
 import { downloadFilesAsZip } from "../utils/zip";
 import PropertyBar from "../components/PropertyBar.vue";
+import {
+  convertViewToSource,
+  convertSourceToView,
+} from "../utils/pixelConverter";
 
 const imageStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -22,7 +26,7 @@ const initCropper = () => {
 
   cropper = new Cropper(imageElement.value, { template: CROPPER_TEMPLATE });
   // Cropper側の変更をストアに送る
-  cropper.getCropperSelection().addEventListener("change", () => {
+  const syncToStore = () => {
     if (isInternalSync) return; // watch経由の更新なら無視する
 
     const selection = cropper.getCropperSelection();
@@ -43,7 +47,9 @@ const initCropper = () => {
     nextTick(() => {
       isInternalSync = false;
     });
-  });
+  };
+  cropper.getCropperSelection().addEventListener("change", syncToStore);
+  cropper.getCropperImage().addEventListener("transform", syncToStore);
 };
 
 // 2. ストアの変更をCropperに反映する
@@ -172,17 +178,88 @@ watch(
   },
   { immediate: true },
 );
+
+// ストア(View基準) -> プロパティバー(Source基準)
+const displayConfig = computed(() => {
+  const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
+
+  // 計算に必要な材料（cropper）がなければ、ストアの値をそのまま渡す
+  // (ストア側で初期値が保証されている前提)
+  if (!cropper) return rawConfig;
+
+  const context = getTransformationContext(cropper);
+  if (!context) return rawConfig;
+
+  // 材料が揃っている時だけ、変換ロジックを通す
+  return {
+    ...rawConfig,
+    selection: convertViewToSource(rawConfig.selection, context),
+  };
+});
+
+// プロパティバー(Source基準) -> ストア(View基準)
+const handleUpdateConfig = (newConfig) => {
+  // A. 環境ガード: 計算に必要なインスタンスがなければ何もしない
+  if (!cropper) return;
+
+  // B. 値のバリデーション:
+  // ユーザーが入力中の「空文字」や、予期せぬ NaN をチェック
+  const s = newConfig.selection;
+  const isInvalid = [s.x, s.y, s.width, s.height].some(
+    (val) => val === "" || val === null || isNaN(val),
+  );
+
+  // 異常な入力の場合は、ストアを更新せずに現在の状態をキープする
+  if (isInvalid) return;
+
+  // C. コンテキスト取得
+  const context = getTransformationContext(cropper);
+  if (!context) return;
+
+  // D. 座標変換 (画像基準 -> 表示基準)
+  const viewSelection = convertSourceToView(s, context);
+
+  // E. ストア更新 (既存の transform を維持しつつ、計算済みの座標を適用)
+  imageStore.updatePreviewConfig(firstImage.previewUrl, {
+    ...newConfig, // transform 等を保持
+    selection: viewSelection,
+  });
+};
+
+/**
+ * 現在のCropperの状態から変換用のパラメータを抽出する
+ */
+function getTransformationContext(cropper) {
+  const container = cropper.container;
+  const canvasRect = container
+    .querySelector("cropper-canvas")
+    .getBoundingClientRect();
+  const imageRect = container
+    .querySelector("cropper-image")
+    .getBoundingClientRect();
+  const transform = cropper.getCropperImage().$getTransform();
+
+  return {
+    // 画像の左上端がCanvasの左上端からどれだけ離れているか
+    offset: {
+      x: imageRect.left - canvasRect.left,
+      y: imageRect.top - canvasRect.top,
+    },
+    // 現在の表示倍率
+    scale: {
+      x: transform[0],
+      y: transform[3],
+    },
+  };
+}
 </script>
 
 <template>
   <div v-if="firstImage" class="cropper-container">
     <div class="cropper-wrapper">
       <PropertyBar
-        :config="imageStore.getFileCropConfig(firstImage.previewUrl)"
-        @update:config="
-          (newConfig) =>
-            imageStore.updatePreviewConfig(firstImage.previewUrl, newConfig)
-        "
+        :config="displayConfig"
+        @update:config="handleUpdateConfig"
       />
       <img
         ref="imageElement"
