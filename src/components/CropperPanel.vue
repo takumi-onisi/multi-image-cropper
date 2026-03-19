@@ -180,10 +180,15 @@ watch(
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
   const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
-  if (!cropper || !rawConfig.transform) return rawConfig;
+
+  // 計算に必要な材料（cropper）がなければ、ストアの値をそのまま渡す
+  // (ストア側で初期値が保証されている前提)
+  if (!cropper) return rawConfig;
 
   const context = getTransformationContext(cropper);
+  if (!context) return rawConfig;
 
+  // 材料が揃っている時だけ、変換ロジックを通す
   return {
     ...rawConfig,
     selection: convertViewToSource(rawConfig.selection, context),
