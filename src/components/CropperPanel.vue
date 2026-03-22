@@ -73,27 +73,6 @@ watch(
   { deep: true },
 );
 
-const confirmCrop = async () => {
-  if (!cropper) return;
-
-  const cropperSelection = cropper.getCropperSelection();
-  const cropperImage = cropper.getCropperImage();
-  if (!cropperSelection || !cropperImage) return;
-
-  // 代表の設定をストアに保存(これが各ファイルにデフォルトのcropConfigとして設定される)
-  imageStore.setGlobalConfig({
-    selection: {
-      x: cropperSelection.x,
-      y: cropperSelection.y,
-      width: cropperSelection.width,
-      height: cropperSelection.height,
-    },
-    transform: cropperImage.$getTransform(),
-  });
-
-  processAll();
-};
-
 const generateCanvas = async (fileItem) => {
   if (!fileItem?.previewUrl) throw new Error("不正なデータ");
 
@@ -268,7 +247,7 @@ function getTransformationContext(cropper) {
       />
 
       <div class="button-area">
-        <button class="confirm-btn" @click="confirmCrop">
+        <button class="confirm-btn" @click="processAll">
           設定を確定して切り抜き
         </button>
       </div>
