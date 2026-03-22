@@ -29,15 +29,17 @@ const initCropper = () => {
   const syncToStore = () => {
     if (isInternalSync) return; // watch経由の更新なら無視する
 
-    const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
     const transform = cropper.getCropperImage().$getTransform();
 
-    const sourceSelection = convertViewToSource(selection, context);
-
     isInternalSync = true;
     imageStore.updatePreviewConfig(firstImage.previewUrl, {
-      selection: sourceSelection,
+      selection: {
+        x: selection.x,
+        y: selection.y,
+        width: selection.width,
+        height: selection.height,
+      },
       transform: transform,
     });
 
@@ -56,14 +58,11 @@ watch(
   (newConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
 
-    const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
-
-    const sourceSelection = convertSourceToView(newConfig.selection, context);
 
     isInternalSync = true;
     // 座標の反映
-    Object.assign(selection, sourceSelection);
+    Object.assign(selection, newConfig.selection);
 
     selection.$change(); // 画面更新をキック
 
@@ -194,7 +193,7 @@ const displayConfig = computed(() => {
   // 材料が揃っている時だけ、変換ロジックを通す
   return {
     ...rawConfig,
-    // selection: convertViewToSource(rawConfig.selection, context),
+    selection: convertViewToSource(rawConfig.selection, context),
   };
 });
 
@@ -218,12 +217,12 @@ const handleUpdateConfig = (newConfig) => {
   if (!context) return;
 
   // D. 座標変換 (画像基準 -> 表示基準)
-  // const viewSelection = convertSourceToView(s, context);
+  const viewSelection = convertSourceToView(s, context);
 
   // E. ストア更新 (既存の transform を維持しつつ、計算済みの座標を適用)
   imageStore.updatePreviewConfig(firstImage.previewUrl, {
     ...newConfig, // transform 等を保持
-    // selection: viewSelection,
+    selection: viewSelection,
   });
 };
 
