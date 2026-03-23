@@ -3,7 +3,7 @@ export const CROPPER_TEMPLATE = `
     <cropper-image translatable scalable action="move"></cropper-image>
     <cropper-handle action="move" theme-color="rgba(255, 255, 255, 0.35)"></cropper-handle>
     <cropper-shade></cropper-shade>
-    <cropper-selection initial-coverage="0.5" movable resizable precise>
+    <cropper-selection initial-coverage="0.5" movable resizable>
       <cropper-grid role="grid" bordered covered></cropper-grid>
       <cropper-crosshair centered></cropper-crosshair>
       <cropper-handle action="move" theme-color="rgba(255, 255, 255, 0.35)"></cropper-handle>
