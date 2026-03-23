@@ -64,8 +64,6 @@ watch(
     // 座標の反映
     Object.assign(selection, newConfig.selection);
 
-    selection.$change(); // 画面更新をキック
-
     nextTick(() => {
       isInternalSync = false;
     });
