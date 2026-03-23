@@ -31,25 +31,6 @@ const initCropper = () => {
 
     const selection = cropper.getCropperSelection();
     const transform = cropper.getCropperImage().$getTransform();
-    const context = getTransformationContext(cropper);
-    if (!context) return;
-
-    // 現在のView座標（小数あり）を画像基準（整数）に変換
-    const sourceIntent = convertViewToSource(selection, context);
-    // その整数をView座標に逆算
-    const viewActual = convertSourceToView(sourceIntent, context);
-
-    console.log(
-      `to stored : width ${viewActual.width} , height ${viewActual.height}`,
-    );
-    console.log(
-      `selection value : width ${selection.width} , height ${selection.height}`,
-    );
-
-    // 乖離チェック（表示ピクセル単位で0.5px以上の差があればConflict）
-    const hasConflict =
-      Math.abs(selection.width - viewActual.width) > 0.5 ||
-      Math.abs(selection.height - viewActual.height) > 0.5;
 
     isInternalSync = true;
     imageStore.updatePreviewConfig(firstImage.previewUrl, {
@@ -58,7 +39,6 @@ const initCropper = () => {
         y: selection.y,
         width: selection.width,
         height: selection.height,
-        isConflict: hasConflict,
       },
       transform: transform,
     });
@@ -192,15 +172,12 @@ const displayConfig = computed(() => {
   // 材料が揃っている時だけ、変換ロジックを通す
   return {
     ...rawConfig,
-    selection: {
-      ...convertViewToSource(rawConfig.selection, context),
-      isConflict: rawConfig.selection.isConflict,
-    },
+    selection: convertViewToSource(rawConfig.selection, context),
   };
 });
 
 // プロパティバー(Source基準) -> ストア(View基準)
-const handleUpdateConfig = async (newConfig) => {
+const handleUpdateConfig = (newConfig) => {
   // 環境ガード: 計算に必要なインスタンスがなければ何もしない
   if (!cropper) return;
 
@@ -218,26 +195,13 @@ const handleUpdateConfig = async (newConfig) => {
   const context = getTransformationContext(cropper);
   if (!context) return;
 
-  // ユーザーが入力した「希望する数値」をストアに登録す前にあらかじめセットしてみる
-  const selection = cropper.getCropperSelection();
-  const viewSelection = convertSourceToView(newConfig.selection, context);
-  // selectionの値を更新
-  Object.assign(selection, viewSelection);
-  await nextTick();
-  // 更新によって反映された値を読み取る
-  const actualSource = convertViewToSource(selection, context);
-
-  // 理想(newConfig) と 現実(actualSource) の乖離をチェック
-  // 1px以上の差があれば Conflict とする
-  const hasConflict =
-    Math.abs(newConfig.selection.width - actualSource.width) >= 1 ||
-    Math.abs(newConfig.selection.height - actualSource.height) >= 1;
+  // 座標変換 (画像基準 -> 表示基準)
+  const viewSelection = convertSourceToView(s, context);
 
   // ストア更新 (既存の transform を維持しつつ、計算済みの座標を適用)
   imageStore.updatePreviewConfig(firstImage.previewUrl, {
     ...newConfig, // transform 等を保持
     selection: viewSelection,
-    isConflict: hasConflict,
   });
 };
 

@@ -5,13 +5,7 @@ import { assertCropConfig } from "../utils/assertions";
 export const useImagesStore = defineStore("images", () => {
   const fileList = ref([]);
   const globalConfig = ref({
-    selection: {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      isConflict: false,
-    },
+    selection: { x: 0, y: 0, width: 0, height: 0 },
     transform: [1, 0, 0, 1, 0, 0],
   });
   const isIndividualMode = ref(false);
