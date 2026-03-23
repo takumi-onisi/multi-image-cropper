@@ -14,11 +14,14 @@ const emit = defineEmits(["update:config"]);
 const localConfig = ref(structuredClone(props.config));
 // プロパティの更新がループしてしまうことを防ぐ
 let isInternalSync = false; // 操作中フラグ (ユーザーが直接プロパティを操作している時は親からの更新を受け付けない)
+let isInvalidValue = false; // ユーザーに無効な値であることを伝えるためのフラグ
 
 // 親の値が変わった時に、ローカル値を更新する
 watch(
   () => props.config,
   (newVal) => {
+    // プロパティーの値についての付帯情報を受け取る
+    isInvalidValue = newVal.selection.isConflict;
     if (isInternalSync) return; // ユーザーが入力中のときは何もしない
     localConfig.value = structuredClone(newVal);
   },
@@ -74,6 +77,9 @@ const onUpdate = () => {
       />
     </div>
   </div>
+  <span v-if="isInvalidValue" class="hint">
+    ⚠ 指定サイズに微調整できません（ズレが生じます）
+  </span>
 </template>
 
 <style scoped>
@@ -87,5 +93,13 @@ const onUpdate = () => {
 .input-group {
   display: flex;
   flex-direction: column;
+}
+.conflict-state input {
+  border: 1.5px solid #ff4d4f; /* 警告の赤 */
+  background-color: #fff2f0;
+}
+.hint {
+  color: #ff4d4f;
+  font-size: 11px;
 }
 </style>
