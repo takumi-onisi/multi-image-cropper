@@ -1,44 +1,40 @@
-import Cropper from "cropperjs";
-import { CROPPER_TEMPLATE } from "../constants/cropperTemplate";
+/**
+ * 画像URLからHTMLImageElementを生成してロード完了を待機する
+ * @param {string} url
+ * @returns {Promise<HTMLImageElement>}
+ */
+export function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    // クロスドメイン制約（CORS）を回避する必要がある場合
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = (err) =>
+      reject(new Error(`画像の読み込みに失敗しました: ${url}`));
+    img.src = url;
+  });
+}
 
 /**
- * imgElement と設定から切り抜き済みCanvasを生成する
- * @param {HTMLImageElement} imgElement - 読み込み済みの画像要素
- * @param {object} cropConfig - 切り抜き設定 { selection: {x, y, width, height}, transform: [...] }
+ * fileと設定から切り抜き済みCanvasを生成する
+ * @param {object} file - ストアに保存された画像情報
+ * @param {object} cropConfig - 切り抜き設定 {x, y, width, height}
  * @returns {Promise<HTMLCanvasElement>} 切り抜かれたCanvas要素
  */
-export async function performCropping(imgElement, cropConfig) {
-  // 1. 一時インスタンス生成
-  const tempCropper = new Cropper(imgElement, { template: CROPPER_TEMPLATE });
-  await tempCropper.getCropperImage().$ready();
+export async function performCropping(file, cropConfig) {
+  const img = await loadImage(file.previewUrl); // 画像をロード
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
-  const selection = tempCropper.getCropperSelection();
-  const image = tempCropper.getCropperImage();
+  // ストアにある「整数値」をそのまま使う
+  const { x, y, width, height } = cropConfig;
 
-  // 2. 設定の復元（行列 → セレクションの順に適用）
-  image.$setTransform(...cropConfig.transform);
-  selection.x = cropConfig.selection.x;
-  selection.y = cropConfig.selection.y;
-  selection.width = cropConfig.selection.width;
-  selection.height = cropConfig.selection.height;
+  canvas.width = width;
+  canvas.height = height;
 
-  // 3. 【核心】ズーム倍率の逆数からスケール係数(S)を導出
-  // zoomScale(a) = 表示幅 / オリジナル幅
-  // つまり、オリジナル幅に戻すには 1 / zoomScale を掛ける
-  const zoomScale = cropConfig.transform[0];
-  const S = 1 / zoomScale;
-
-  // 4. オリジナルサイズを計算
-  const targetWidth = Math.round(cropConfig.selection.width * S);
-  const targetHeight = Math.round(cropConfig.selection.height * S);
-
-  // 5. 切り抜き実行（ここで計算値を強制適用）
-  const canvas = await selection.$toCanvas({
-    width: targetWidth,
-    height: targetHeight,
-  });
-
-  tempCropper.destroy();
+  // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+  // 元画像の (x, y) から (width, height) 分を、Canvasの (0, 0) に描画
+  ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
   return canvas;
 }
 
