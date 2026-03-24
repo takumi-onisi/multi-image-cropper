@@ -73,34 +73,10 @@ watch(
 const generateCanvas = async (fileItem) => {
   if (!fileItem?.previewUrl) throw new Error("不正なデータ");
 
-  // DOMの構築（副作用）
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-9999px"; // 画面外へ飛ばす
-  container.style.top = "0";
-  container.style.opacity = "0";
-  document.body.appendChild(container);
-  // コンテナとimg要素を実際のdomに追加しないとcropperが正常に動作しない
-  const img = document.createElement("img");
-  container.appendChild(img);
-
-  try {
-    // 画像読み込みのPromiseをラップ
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () =>
-        reject(new Error(`画像読み込み失敗: ${fileItem.name}`));
-      img.src = fileItem.previewUrl; // 画像の読み込み開始
-    });
-
-    // ファイルに適用される切り抜き用設定を取得
-    const cropConfig = imageStore.getFileCropConfig(fileItem.previewUrl);
-    // ロジックの実行（performCroppingへ委譲）
-    return await performCropping(img, cropConfig);
-  } finally {
-    // 後片付け（副作用）
-    if (container.parentNode) document.body.removeChild(container);
-  }
+  // ファイルに適用される切り抜き用設定を取得
+  const cropConfig = imageStore.getFileCropConfig(fileItem.previewUrl);
+  // ロジックの実行（performCroppingへ委譲）
+  return await performCropping(fileItem, cropConfig.selection);
 };
 
 const processAll = async () => {
