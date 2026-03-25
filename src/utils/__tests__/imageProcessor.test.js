@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { performCropping } from "../imageProcessor";
+import * as imageLoader from "../imageLoader";
 import Cropper from "cropperjs";
 
 // Cropperjs の動作を完全にシミュレートするモック
@@ -29,42 +30,55 @@ vi.mock("cropperjs", () => {
 });
 
 describe("performCropping", () => {
-  it("Cropperへのパラメータ設定からCanvas生成、後片付けまでが正しく行われること", async () => {
-    // Cropperに対してAPIを正しく叩いていることを検証する
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
 
-    // 準備：テスト用のダミー画像と設定
-    const dummyImg = document.createElement("img");
-    const mockConfig = {
-      selection: { x: 100, y: 150, width: 200, height: 250 },
-      transform: [1, 0, 0, 1, 10, 20],
+  it("指定された config のサイズ通りに Canvas が生成されること", async () => {
+    // 1. 準備: テスト用のダミー画像と設定
+    const mockImg = { width: 1000, height: 1000 };
+    const mockFile = { previewUrl: "blob:http://localhost/test-uuid" };
+    const mockConfig = { x: 100, y: 150, width: 525, height: 576 };
+
+    // loadImage が呼ばれたらダミー画像を返すようにモック
+    vi.spyOn(imageLoader, "loadImage").mockResolvedValue(mockImg);
+
+    // Canvas のメソッドを監視できるようにモック
+    const mockCtx = {
+      drawImage: vi.fn(),
+    };
+    const mockCanvas = {
+      getContext: vi.fn().mockReturnValue(mockCtx),
+      width: 0,
+      height: 0,
     };
 
-    // 実行
-    const canvas = await performCropping(dummyImg, mockConfig);
+    // document.createElement('canvas') が呼ばれたら mockCanvas を返す
+    vi.spyOn(document, "createElement").mockReturnValue(mockCanvas);
 
-    // 検証：Cropperが正しくインスタンス化されたか
-    expect(Cropper).toHaveBeenCalled();
+    // 2. 実行
+    const result = await performCropping(mockFile, mockConfig);
 
-    // 検証：内部で正しく値が代入されたかを検証
+    // 3. 検証
+    // A. Canvas のサイズが config 通りか
+    expect(mockCanvas.width).toBe(525);
+    expect(mockCanvas.height).toBe(576);
 
-    // インスタンスを取得（Cropperのモックインスタンスにアクセス）
-    const instance = Cropper.mock.results[0].value;
-    const selection = instance.getCropperSelection();
-    const image = instance.getCropperImage();
+    // B. drawImage が正しい引数で呼ばれているか
+    // ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+    expect(mockCtx.drawImage).toHaveBeenCalledWith(
+      mockImg,
+      100, // sx
+      150, // sy
+      525, // sWidth
+      576, // sHeight
+      0, // dx
+      0, // dy
+      525, // dWidth
+      576, // dHeight
+    );
 
-    // 値が正しく反映されているか確認
-    expect(selection.x).toBe(mockConfig.selection.x);
-    expect(selection.y).toBe(mockConfig.selection.y);
-    expect(selection.width).toBe(mockConfig.selection.width);
-    expect(selection.height).toBe(mockConfig.selection.height);
-
-    // transform が正しく適用されたか（mock関数の呼び出し回数や引数を確認）
-    expect(image.$setTransform).toHaveBeenCalledWith(...mockConfig.transform);
-
-    // 検証：戻り値がCanvasであるか
-    expect(canvas).toBeInstanceOf(HTMLCanvasElement);
-
-    // 検証：destroy が呼ばれているかも確認（メモリリーク防止のため重要）
-    expect(instance.destroy).toHaveBeenCalled();
+    expect(result).toBe(mockCanvas);
   });
 });

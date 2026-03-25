@@ -29,17 +29,14 @@ const initCropper = () => {
   const syncToStore = () => {
     if (isInternalSync) return; // watch経由の更新なら無視する
 
+    const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
     const transform = cropper.getCropperImage().$getTransform();
+    const sourceSelection = convertViewToSource(selection, context);
 
     isInternalSync = true;
     imageStore.updatePreviewConfig(firstImage.previewUrl, {
-      selection: {
-        x: selection.x,
-        y: selection.y,
-        width: selection.width,
-        height: selection.height,
-      },
+      selection: sourceSelection, // 画像の大きさ基準でストアに保存
       transform: transform,
     });
 
@@ -58,13 +55,13 @@ watch(
   (newConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
 
+    const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
+    const sourceSelection = convertSourceToView(newConfig.selection, context);
 
     isInternalSync = true;
     // 座標の反映
-    Object.assign(selection, newConfig.selection);
-
-    selection.$change(); // 画面更新をキック
+    Object.assign(selection, sourceSelection);
 
     nextTick(() => {
       isInternalSync = false;
@@ -73,58 +70,13 @@ watch(
   { deep: true },
 );
 
-const confirmCrop = async () => {
-  if (!cropper) return;
-
-  const cropperSelection = cropper.getCropperSelection();
-  const cropperImage = cropper.getCropperImage();
-  if (!cropperSelection || !cropperImage) return;
-
-  // 代表の設定をストアに保存(これが各ファイルにデフォルトのcropConfigとして設定される)
-  imageStore.setGlobalConfig({
-    selection: {
-      x: cropperSelection.x,
-      y: cropperSelection.y,
-      width: cropperSelection.width,
-      height: cropperSelection.height,
-    },
-    transform: cropperImage.$getTransform(),
-  });
-
-  processAll();
-};
-
 const generateCanvas = async (fileItem) => {
   if (!fileItem?.previewUrl) throw new Error("不正なデータ");
 
-  // DOMの構築（副作用）
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-9999px"; // 画面外へ飛ばす
-  container.style.top = "0";
-  container.style.opacity = "0";
-  document.body.appendChild(container);
-  // コンテナとimg要素を実際のdomに追加しないとcropperが正常に動作しない
-  const img = document.createElement("img");
-  container.appendChild(img);
-
-  try {
-    // 画像読み込みのPromiseをラップ
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () =>
-        reject(new Error(`画像読み込み失敗: ${fileItem.name}`));
-      img.src = fileItem.previewUrl; // 画像の読み込み開始
-    });
-
-    // ファイルに適用される切り抜き用設定を取得
-    const cropConfig = imageStore.getFileCropConfig(fileItem.previewUrl);
-    // ロジックの実行（performCroppingへ委譲）
-    return await performCropping(img, cropConfig);
-  } finally {
-    // 後片付け（副作用）
-    if (container.parentNode) document.body.removeChild(container);
-  }
+  // ファイルに適用される切り抜き用設定を取得
+  const cropConfig = imageStore.getFileCropConfig(fileItem.previewUrl);
+  // ロジックの実行（performCroppingへ委譲）
+  return await performCropping(fileItem, cropConfig.selection);
 };
 
 const processAll = async () => {
@@ -193,16 +145,15 @@ const displayConfig = computed(() => {
   // 材料が揃っている時だけ、変換ロジックを通す
   return {
     ...rawConfig,
-    selection: convertViewToSource(rawConfig.selection, context),
   };
 });
 
 // プロパティバー(Source基準) -> ストア(View基準)
 const handleUpdateConfig = (newConfig) => {
-  // A. 環境ガード: 計算に必要なインスタンスがなければ何もしない
+  // 環境ガード: 計算に必要なインスタンスがなければ何もしない
   if (!cropper) return;
 
-  // B. 値のバリデーション:
+  // 値のバリデーション:
   // ユーザーが入力中の「空文字」や、予期せぬ NaN をチェック
   const s = newConfig.selection;
   const isInvalid = [s.x, s.y, s.width, s.height].some(
@@ -212,17 +163,13 @@ const handleUpdateConfig = (newConfig) => {
   // 異常な入力の場合は、ストアを更新せずに現在の状態をキープする
   if (isInvalid) return;
 
-  // C. コンテキスト取得
+  // コンテキスト取得
   const context = getTransformationContext(cropper);
   if (!context) return;
 
-  // D. 座標変換 (画像基準 -> 表示基準)
-  const viewSelection = convertSourceToView(s, context);
-
-  // E. ストア更新 (既存の transform を維持しつつ、計算済みの座標を適用)
+  // ストア更新 (プロパティバーの値をそのまま適用)
   imageStore.updatePreviewConfig(firstImage.previewUrl, {
-    ...newConfig, // transform 等を保持
-    selection: viewSelection,
+    ...newConfig,
   });
 };
 
@@ -268,7 +215,7 @@ function getTransformationContext(cropper) {
       />
 
       <div class="button-area">
-        <button class="confirm-btn" @click="confirmCrop">
+        <button class="confirm-btn" @click="processAll">
           設定を確定して切り抜き
         </button>
       </div>
