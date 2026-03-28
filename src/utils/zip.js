@@ -10,7 +10,7 @@ import { DEFAULT_ZIP_FILENAME } from "../constants/zip";
 
 /**
  * 複数のファイルをZIPにまとめてダウンロードする
- * * @param {ZipFile[]} files - ZIPに含めるファイル情報の配列
+ * @param {ZipFile[]} files - ZIPに含めるファイル情報の配列
  * @param {string} [zipName="download.zip"] - 生成するZIPファイル名
  */
 export const downloadFilesAsZip = async (

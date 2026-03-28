@@ -3,13 +3,12 @@ import { useTemplateRef, ref, computed, onMounted, watch, nextTick } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import { CROPPER_TEMPLATE } from "../constants/cropperTemplate";
 import Cropper from "cropperjs";
-import { performCropping, convertToZipItem } from "../utils/imageProcessor";
-import { downloadFilesAsZip } from "../utils/zip";
 import PropertyBar from "../components/PropertyBar.vue";
 import {
   convertViewToSource,
   convertSourceToView,
 } from "../utils/pixelConverter";
+import CropExecuteButton from "./CropExecuteButton.vue";
 
 const imageStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -69,57 +68,6 @@ watch(
   },
   { deep: true },
 );
-
-const generateCanvas = async (fileItem) => {
-  if (!fileItem?.previewUrl) throw new Error("不正なデータ");
-
-  // ファイルに適用される切り抜き用設定を取得
-  const cropConfig = imageStore.getFileCropConfig(fileItem.previewUrl);
-  // ロジックの実行（performCroppingへ委譲）
-  return await performCropping(fileItem, cropConfig.selection);
-};
-
-const processAll = async () => {
-  const files = imageStore.fileList;
-  const processedCanvases = [];
-
-  for (const file of files) {
-    try {
-      // 1枚ずつ順番に await
-      const canvas = await generateCanvas(file);
-
-      // 成功したら配列に保存（またはZIPに追加）
-      processedCanvases.push({
-        name: file.name,
-        canvas: canvas,
-      });
-
-      console.log(`成功: ${file.name}`);
-    } catch (err) {
-      // reject された場合でも、ここでキャッチすればループは止まらない
-      console.error(`失敗: ${file.name} - 理由: ${err.message}`);
-      // 必要に応じてユーザーに「失敗したファイルがある」ことを知らせるフラグを立てる
-    }
-  }
-
-  console.log("全件の処理が完了しました", processedCanvases);
-
-  // ファイル形式（将来的にユーザー設定等から取得することを想定）
-  const exportType = "image/png";
-  // Canvasの配列をZIP用のデータ配列に変換
-  const zipFilePromises = processedCanvases.map((item) =>
-    convertToZipItem(item, exportType),
-  );
-  const zipFiles = await Promise.all(zipFilePromises);
-
-  // ZIP化してダウンロード
-  await downloadFilesAsZip(zipFiles);
-  // メモリ解放：Canvas要素は巨大なので使い終わったらクリアするのが安全
-  processedCanvases.forEach((item) => {
-    item.canvas.width = 0;
-    item.canvas.height = 0;
-  });
-};
 
 // 一枚目の画像が読み込まれたら初期化
 watch(
@@ -215,9 +163,7 @@ function getTransformationContext(cropper) {
       />
 
       <div class="button-area">
-        <button class="confirm-btn" @click="processAll">
-          設定を確定して切り抜き
-        </button>
+        <CropExecuteButton />
       </div>
     </div>
   </div>
@@ -251,15 +197,5 @@ function getTransformationContext(cropper) {
   width: 100%;
   display: flex;
   justify-content: center;
-}
-
-.confirm-btn {
-  padding: 10px 20px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
 }
 </style>
