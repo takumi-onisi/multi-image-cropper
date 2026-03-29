@@ -1,8 +1,8 @@
 <script setup>
 import { useImagesStore } from "./stores/imagesStore";
 import ImageDropZone from "./components/ImageDropZone.vue";
-import CropperPanel from "./components/CropperPanel.vue";
 import GlobalSettingView from "./components/GlobalSettingView.vue";
+import CropPreviewGrid from "./components/CropPreviewGrid.vue";
 const imagesStore = useImagesStore();
 </script>
 
@@ -16,10 +16,7 @@ const imagesStore = useImagesStore();
     <GlobalSettingView />
   </div>
 
-  <div v-for="item in imagesStore.fileList" :key="item.id">
-    <img :src="item.previewUrl" />
-    <p>{{ item.name }}</p>
-  </div>
+  <CropPreviewGrid />
 </template>
 
 <style scoped></style>
