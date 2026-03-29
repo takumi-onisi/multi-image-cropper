@@ -189,8 +189,8 @@ function getTransformationContext(cropper) {
 
 :deep(cropper-canvas) {
   margin: auto;
-  width: 50vw !important;
-  height: 50vw !important;
+  width: 70vh !important;
+  height: 70vh !important;
 }
 
 .button-area {
