@@ -8,7 +8,6 @@ import {
   convertViewToSource,
   convertSourceToView,
 } from "../utils/pixelConverter";
-import CropExecuteButton from "./CropExecuteButton.vue";
 
 const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -161,10 +160,6 @@ function getTransformationContext(cropper) {
         :src="firstImage.previewUrl"
         class="cropper-img"
       />
-
-      <div class="button-area">
-        <CropExecuteButton />
-      </div>
     </div>
   </div>
 </template>
@@ -192,10 +187,10 @@ function getTransformationContext(cropper) {
   width: 70vh !important;
   height: 70vh !important;
 }
-
+/* 
 .button-area {
   width: 100%;
   display: flex;
   justify-content: center;
-}
+} */
 </style>
