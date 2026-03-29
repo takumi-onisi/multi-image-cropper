@@ -1,5 +1,7 @@
 <script setup>
+import { ref } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
+import IndividualSettingDialog from "./IndividualSettingDialog.vue";
 
 const imagesStore = useImagesStore();
 
@@ -25,7 +27,6 @@ const getClipContainerStyle = (file) => {
  */
 const getImageTransformStyle = (file) => {
   const config = imagesStore.getFileCropConfig(file.previewUrl);
-  console.log(config.selection);
   const { x, y, width, height } = config.selection;
 
   // コンテナの縮尺に合わせるためのスケール計算
@@ -42,9 +43,20 @@ const getImageTransformStyle = (file) => {
   };
 };
 
+// --- ダイアログ制御用の状態 ---
+const isDialogOpen = ref(false);
+const selectedFile = ref(null);
+
+// ボタンが押された時の処理
 const openIndividualEditor = (file) => {
-  console.log("個別設定を開く:", file.name);
-  // ここでダイアログ制御フラグを立てる等の処理を後で追加
+  selectedFile.value = file; // 編集対象のファイルをセット
+  isDialogOpen.value = true; // ダイアログを表示
+};
+
+// ダイアログを閉じる処理
+const closeEditor = () => {
+  isDialogOpen.value = false;
+  selectedFile.value = null;
 };
 </script>
 
@@ -80,6 +92,11 @@ const openIndividualEditor = (file) => {
         </div>
       </div>
     </div>
+    <IndividualSettingDialog
+      v-if="isDialogOpen"
+      :file="selectedFile"
+      @close="closeEditor"
+    />
   </div>
 </template>
 
