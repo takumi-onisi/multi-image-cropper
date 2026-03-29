@@ -9,6 +9,10 @@ export const useImagesStore = defineStore("images", () => {
     transform: [1, 0, 0, 1, 0, 0],
   });
   const isIndividualMode = ref(false);
+  // モード切り替え用のシンプルな関数
+  const setIndividualMode = (value) => {
+    isIndividualMode.value = value;
+  };
 
   const addFiles = (files) => {
     // files は FileList という特殊な型なので、Array.fromで配列化が必要
@@ -86,6 +90,7 @@ export const useImagesStore = defineStore("images", () => {
     addFiles,
     clearFiles,
     isIndividualMode,
+    setIndividualMode,
     updatePreviewConfig,
     getFileCropConfig,
     getGlobalConfig,
