@@ -10,14 +10,14 @@ import {
 } from "../utils/pixelConverter";
 import CropExecuteButton from "./CropExecuteButton.vue";
 
-const imageStore = useImagesStore();
+const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 // cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
 let isInternalSync = false;
 
 // 一枚目の画像を取得
-const firstImage = computed(() => imageStore.fileList[0]);
+const firstImage = computed(() => imagesStore.fileList[0]);
 
 const initCropper = () => {
   if (cropper) cropper.destroy();
@@ -34,7 +34,7 @@ const initCropper = () => {
     const sourceSelection = convertViewToSource(selection, context);
 
     isInternalSync = true;
-    imageStore.updatePreviewConfig(firstImage.previewUrl, {
+    imagesStore.updatePreviewConfig(firstImage.previewUrl, {
       selection: sourceSelection, // 画像の大きさ基準でストアに保存
       transform: transform,
     });
@@ -50,7 +50,7 @@ const initCropper = () => {
 
 // 2. ストアの変更をCropperに反映する
 watch(
-  () => imageStore.getFileCropConfig(firstImage.previewUrl),
+  () => imagesStore.getFileCropConfig(firstImage.previewUrl),
   (newConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
 
@@ -81,7 +81,7 @@ watch(
 
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
-  const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
+  const rawConfig = imagesStore.getFileCropConfig(firstImage.previewUrl);
 
   // 計算に必要な材料（cropper）がなければ、ストアの値をそのまま渡す
   // (ストア側で初期値が保証されている前提)
@@ -116,7 +116,7 @@ const handleUpdateConfig = (newConfig) => {
   if (!context) return;
 
   // ストア更新 (プロパティバーの値をそのまま適用)
-  imageStore.updatePreviewConfig(firstImage.previewUrl, {
+  imagesStore.updatePreviewConfig(firstImage.previewUrl, {
     ...newConfig,
   });
 };
