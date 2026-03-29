@@ -5,12 +5,13 @@ import CropperPanel from "./CropperPanel.vue";
 import CropExecuteButton from "./CropExecuteButton.vue";
 
 const imagesStore = useImagesStore();
-const filesUploaded = computed(() => imagesStore.fileList.length > 0);
+const firstImage = computed(() => imagesStore.fileList[0]);
 </script>
 
 <template>
-  <CropperPanel />
-  <div v-if="filesUploaded" class="button-area">
+  <CropperPanel v-if="firstImage" :image="firstImage" />
+
+  <div v-if="firstImage" class="button-area">
     <CropExecuteButton />
   </div>
 </template>

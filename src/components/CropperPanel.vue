@@ -14,9 +14,13 @@ const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 // cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
 let isInternalSync = false;
-
-// 一枚目の画像を取得
-const firstImage = computed(() => imagesStore.fileList[0]);
+const props = defineProps({
+  // 切り抜き対象の画像
+  image: {
+    type: Object,
+    required: true,
+  },
+});
 
 const initCropper = () => {
   if (cropper) cropper.destroy();
@@ -33,7 +37,7 @@ const initCropper = () => {
     const sourceSelection = convertViewToSource(selection, context);
 
     isInternalSync = true;
-    imagesStore.updatePreviewConfig(firstImage.previewUrl, {
+    imagesStore.updatePreviewConfig(props.image.previewUrl, {
       selection: sourceSelection, // 画像の大きさ基準でストアに保存
       transform: transform,
     });
@@ -49,7 +53,7 @@ const initCropper = () => {
 
 // 2. ストアの変更をCropperに反映する
 watch(
-  () => imagesStore.getFileCropConfig(firstImage.previewUrl),
+  () => imagesStore.getFileCropConfig(props.image.previewUrl),
   (newConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
 
@@ -70,7 +74,7 @@ watch(
 
 // 一枚目の画像が読み込まれたら初期化
 watch(
-  firstImage,
+  props.image,
   () => {
     // DOMが更新されるのを待ってから初期化
     setTimeout(initCropper, 100);
@@ -80,7 +84,7 @@ watch(
 
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
-  const rawConfig = imagesStore.getFileCropConfig(firstImage.previewUrl);
+  const rawConfig = imagesStore.getFileCropConfig(props.image.previewUrl);
 
   // 計算に必要な材料（cropper）がなければ、ストアの値をそのまま渡す
   // (ストア側で初期値が保証されている前提)
@@ -115,7 +119,7 @@ const handleUpdateConfig = (newConfig) => {
   if (!context) return;
 
   // ストア更新 (プロパティバーの値をそのまま適用)
-  imagesStore.updatePreviewConfig(firstImage.previewUrl, {
+  imagesStore.updatePreviewConfig(props.image.previewUrl, {
     ...newConfig,
   });
 };
@@ -149,7 +153,7 @@ function getTransformationContext(cropper) {
 </script>
 
 <template>
-  <div v-if="firstImage" class="cropper-container">
+  <div v-if="props.image" class="cropper-container">
     <div class="cropper-wrapper">
       <PropertyBar
         :config="displayConfig"
@@ -157,7 +161,7 @@ function getTransformationContext(cropper) {
       />
       <img
         ref="imageElement"
-        :src="firstImage.previewUrl"
+        :src="props.image.previewUrl"
         class="cropper-img"
       />
     </div>
