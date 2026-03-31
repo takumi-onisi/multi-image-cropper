@@ -54,8 +54,16 @@ const initCropper = () => {
 // 2. ストアの変更をCropperに反映する
 watch(
   () => imagesStore.getFileCropConfig(props.image.previewUrl),
-  (newConfig) => {
+  (newConfig, oldConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
+
+    // 前回の設定値と今回の設定値が全く同じなら、Vueの誤検知として無視する
+    if (
+      JSON.stringify(newConfig.selection) ===
+      JSON.stringify(oldConfig?.selection)
+    ) {
+      return;
+    }
 
     const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
