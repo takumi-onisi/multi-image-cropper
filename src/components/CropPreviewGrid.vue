@@ -50,6 +50,7 @@ const selectedFile = ref(null);
 // ボタンが押された時の処理
 const openIndividualEditor = (file) => {
   selectedFile.value = file; // 編集対象のファイルをセット
+  imagesStore.prepareIndividualEdit(file.previewUrl);
   isDialogOpen.value = true; // ダイアログを表示
 };
 

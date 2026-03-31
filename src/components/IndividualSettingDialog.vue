@@ -20,18 +20,24 @@ onUnmounted(() => {
   imagesStore.setIndividualMode(false);
 });
 
-const handleClose = () => {
+const handleCommit = () => {
+  imagesStore.commitIndividualEdit(props.file.previewUrl);
+  emit("close");
+};
+
+const handleCancel = () => {
+  imagesStore.clearActiveCropConfig();
   emit("close");
 };
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="modal-overlay" @click.self="$emit('close')">
+    <div class="modal-overlay" @click.self="handleCancel">
       <div class="modal-content">
         <header class="modal-header">
           <h3>個別切り抜き設定: {{ file.name }}</h3>
-          <button class="close-icon" @click="$emit('close')">&times;</button>
+          <button class="close-icon" @click="handleCancel">&times;</button>
         </header>
 
         <main class="modal-body">
@@ -39,7 +45,7 @@ const handleClose = () => {
         </main>
 
         <footer class="modal-footer">
-          <button class="btn-primary" @click="handleClose">完了</button>
+          <button class="btn-primary" @click="handleCommit">完了</button>
         </footer>
       </div>
     </div>
