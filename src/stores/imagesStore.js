@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { assertCropConfig } from "../utils/assertions";
+import { GLOBAL_PREVIEW_ID } from "../constants/cropConfig";
 
 export const useImagesStore = defineStore("images", () => {
   const fileList = ref([]);
@@ -36,8 +37,21 @@ export const useImagesStore = defineStore("images", () => {
       };
     });
 
-    // 既存のリストの後ろに追加
-    fileList.value = [...fileList.value, ...newEntries];
+    if (fileList.value.length === 0) {
+      const first = newEntries[0];
+      const globalPreview = {
+        ...first,
+        id: GLOBAL_PREVIEW_ID,
+        // 同じFileオブジェクトから別のURLを発行することで、
+        // 「同じ画像だが別個体」としてストアに認識させる
+        previewUrl: URL.createObjectURL(first.file),
+        isGlobalMaster: true,
+      };
+      fileList.value = [globalPreview, ...newEntries];
+    } else {
+      // 既存のリストの後ろに追加
+      fileList.value = [...fileList.value, ...newEntries];
+    }
   };
 
   const clearFiles = () => {
@@ -45,6 +59,21 @@ export const useImagesStore = defineStore("images", () => {
     fileList.value.forEach((item) => URL.revokeObjectURL(item.previewUrl)); // URLの開放
     fileList.value = []; // ファイルリストをクリア
   };
+
+  // ユーザーに表示するリスト（グローバルマスターを除外）
+  const displayFileList = computed(() => {
+    return fileList.value.filter((file) => file.id !== GLOBAL_PREVIEW_ID);
+  });
+
+  // グローバル設定画面で使うための専用ファイルを取得
+  const globalPreviewFile = computed(() => {
+    return fileList.value.find((file) => file.id === GLOBAL_PREVIEW_ID);
+  });
+
+  // ユーザーに見せる切り抜き対象の画像枚数を返す
+  const totalImageCount = computed(() => {
+    return displayFileList.value.length;
+  });
 
   // 渡された画像の切り抜き設定を返す
   const getFileCropConfig = computed(() => (previewUrl) => {
@@ -191,6 +220,9 @@ export const useImagesStore = defineStore("images", () => {
     fileList,
     addFiles,
     clearFiles,
+    displayFileList,
+    globalPreviewFile,
+    totalImageCount,
     isIndividualMode,
     setIndividualMode,
     updatePreviewConfig,

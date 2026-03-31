@@ -8,7 +8,7 @@ const imagesStore = useImagesStore();
 
 <template>
   <h1>Image Crop Tool</h1>
-  <p>現在のファイル数 : {{ imagesStore.fileList.length }}</p>
+  <p>現在のファイル数 : {{ imagesStore.totalImageCount }}</p>
 
   <div>
     <h2>画像切り抜き</h2>

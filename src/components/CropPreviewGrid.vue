@@ -68,12 +68,12 @@ const closeEditor = () => {
 <template>
   <div class="preview-grid-container">
     <h2 class="grid-title">
-      切り抜きプレビュー（全 {{ imagesStore.fileList.length }} 枚）
+      切り抜きプレビュー（全 {{ imagesStore.totalImageCount }} 枚）
     </h2>
 
     <div class="preview-grid">
       <div
-        v-for="file in imagesStore.fileList"
+        v-for="file in imagesStore.displayFileList"
         :key="file.previewUrl"
         class="preview-card"
       >
