@@ -54,6 +54,10 @@ const openIndividualEditor = (file) => {
   isDialogOpen.value = true; // ダイアログを表示
 };
 
+const resetIndividualConfig = (previewUrl) => {
+  imagesStore.clearFileCropConfig(previewUrl);
+};
+
 // ダイアログを閉じる処理
 const closeEditor = () => {
   isDialogOpen.value = false;
@@ -89,6 +93,13 @@ const closeEditor = () => {
           </p>
           <button @click="openIndividualEditor(file)" class="edit-button">
             個別に設定
+          </button>
+          <button
+            v-if="file.cropConfig"
+            @click="resetIndividualConfig(file.previewUrl)"
+            class="reset-button"
+          >
+            個別設定を破棄
           </button>
         </div>
       </div>
@@ -180,6 +191,7 @@ const closeEditor = () => {
 .edit-button {
   width: 100%;
   padding: 0.4rem 0.75rem;
+  margin-bottom: 0.2rem;
   font-size: 0.875rem;
   background-color: #3182ce;
   color: #ffffff;
@@ -191,5 +203,18 @@ const closeEditor = () => {
 
 .edit-button:hover {
   background-color: #2b6cb0;
+}
+
+/* リセットボタン */
+.reset-button {
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: #dfdfdf;
+  color: #353535;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 </style>
