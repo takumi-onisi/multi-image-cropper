@@ -176,6 +176,7 @@ const closeEditor = () => {
   padding: 0.75rem;
   border-top: 1px solid #edf2f7;
   background-color: #f8fafc;
+  flex-grow: 1;
 }
 
 .file-name {
