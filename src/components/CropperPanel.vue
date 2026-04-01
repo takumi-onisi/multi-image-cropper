@@ -8,16 +8,19 @@ import {
   convertViewToSource,
   convertSourceToView,
 } from "../utils/pixelConverter";
-import CropExecuteButton from "./CropExecuteButton.vue";
 
-const imageStore = useImagesStore();
+const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 // cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
 let isInternalSync = false;
-
-// 一枚目の画像を取得
-const firstImage = computed(() => imageStore.fileList[0]);
+const props = defineProps({
+  // 切り抜き対象の画像
+  image: {
+    type: Object,
+    required: true,
+  },
+});
 
 const initCropper = () => {
   if (cropper) cropper.destroy();
@@ -34,7 +37,7 @@ const initCropper = () => {
     const sourceSelection = convertViewToSource(selection, context);
 
     isInternalSync = true;
-    imageStore.updatePreviewConfig(firstImage.previewUrl, {
+    imagesStore.updatePreviewConfig(props.image.previewUrl, {
       selection: sourceSelection, // 画像の大きさ基準でストアに保存
       transform: transform,
     });
@@ -50,9 +53,17 @@ const initCropper = () => {
 
 // 2. ストアの変更をCropperに反映する
 watch(
-  () => imageStore.getFileCropConfig(firstImage.previewUrl),
-  (newConfig) => {
+  () => imagesStore.getFileCropConfig(props.image.previewUrl),
+  (newConfig, oldConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
+
+    // 前回の設定値と今回の設定値が全く同じなら、Vueの誤検知として無視する
+    if (
+      JSON.stringify(newConfig.selection) ===
+      JSON.stringify(oldConfig?.selection)
+    ) {
+      return;
+    }
 
     const context = getTransformationContext(cropper);
     const selection = cropper.getCropperSelection();
@@ -71,7 +82,7 @@ watch(
 
 // 一枚目の画像が読み込まれたら初期化
 watch(
-  firstImage,
+  props.image,
   () => {
     // DOMが更新されるのを待ってから初期化
     setTimeout(initCropper, 100);
@@ -81,7 +92,7 @@ watch(
 
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
-  const rawConfig = imageStore.getFileCropConfig(firstImage.previewUrl);
+  const rawConfig = imagesStore.getFileCropConfig(props.image.previewUrl);
 
   // 計算に必要な材料（cropper）がなければ、ストアの値をそのまま渡す
   // (ストア側で初期値が保証されている前提)
@@ -116,7 +127,7 @@ const handleUpdateConfig = (newConfig) => {
   if (!context) return;
 
   // ストア更新 (プロパティバーの値をそのまま適用)
-  imageStore.updatePreviewConfig(firstImage.previewUrl, {
+  imagesStore.updatePreviewConfig(props.image.previewUrl, {
     ...newConfig,
   });
 };
@@ -150,7 +161,7 @@ function getTransformationContext(cropper) {
 </script>
 
 <template>
-  <div v-if="firstImage" class="cropper-container">
+  <div v-if="props.image" class="cropper-container">
     <div class="cropper-wrapper">
       <PropertyBar
         :config="displayConfig"
@@ -158,13 +169,9 @@ function getTransformationContext(cropper) {
       />
       <img
         ref="imageElement"
-        :src="firstImage.previewUrl"
+        :src="props.image.previewUrl"
         class="cropper-img"
       />
-
-      <div class="button-area">
-        <CropExecuteButton />
-      </div>
     </div>
   </div>
 </template>
@@ -189,13 +196,13 @@ function getTransformationContext(cropper) {
 
 :deep(cropper-canvas) {
   margin: auto;
-  width: 50vw !important;
-  height: 50vw !important;
+  width: 70vh !important;
+  height: 70vh !important;
 }
-
+/* 
 .button-area {
   width: 100%;
   display: flex;
   justify-content: center;
-}
+} */
 </style>
