@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, nextTick, toRaw } from "vue";
+import { CROP_MODES } from "../constants/cropModes";
 
 const props = defineProps({
   config: {
@@ -26,52 +27,51 @@ watch(
 );
 
 // 入力イベント：親へ変更を通知
-const onUpdate = () => {
-  isInternalSync = true; // 反映を停止する
-  const rawData = toRaw(localConfig.value);
-  const clonedData = structuredClone(rawData);
-  emit("update:config", clonedData);
+watch(
+  () => localConfig.value,
+  (newVal) => {
+    // もし「親からの更新」によってここが動いた場合は、再送(emit)しない
+    if (isInternalSync) return;
 
-  // ユーザー入力が終わったタイミングでフラグを戻す
-  nextTick(() => {
-    isInternalSync = false;
-  });
-};
+    // --- ここから送信処理 ---
+    isInternalSync = true; // ロックをかける
+
+    const clonedData = structuredClone(toRaw(newVal));
+    console.log(clonedData);
+    emit("update:config", clonedData);
+
+    // ストア経由で props が戻ってくるまでの時間を考慮して nextTick で解除
+    nextTick(() => {
+      isInternalSync = false; // ロックを解除
+    });
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div class="property-bar">
     <div class="input-group">
+      <select v-model="localConfig.mode">
+        <option :value="CROP_MODES.RATIO">比率</option>
+        <option :value="CROP_MODES.FIXED_SIZE">幅 × 高さ × 解像度</option>
+      </select>
+    </div>
+    <div class="input-group">
       <label>X:</label>
-      <input
-        type="number"
-        v-model.number="localConfig.selection.x"
-        @input="onUpdate"
-      />
+      <input type="number" v-model.number="localConfig.selection.x" />
     </div>
     <div class="input-group">
       <label>Y:</label>
-      <input
-        type="number"
-        v-model.number="localConfig.selection.y"
-        @input="onUpdate"
-      />
+      <input type="number" v-model.number="localConfig.selection.y" />
     </div>
     <div class="input-group">
       <label>幅:</label>
-      <input
-        type="number"
-        v-model.number="localConfig.selection.width"
-        @input="onUpdate"
-      />
+      <input type="number" v-model.number="localConfig.selection.width" />
     </div>
     <div class="input-group">
       <label>高さ:</label>
-      <input
-        type="number"
-        v-model.number="localConfig.selection.height"
-        @input="onUpdate"
-      />
+      <input type="number" v-model.number="localConfig.selection.height" />
     </div>
   </div>
 </template>
