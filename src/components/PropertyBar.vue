@@ -14,16 +14,22 @@ const emit = defineEmits(["update:config"]);
 // 親からの値を受けて、ローカルで扱うためのリアクティブデータ
 const localConfig = ref(structuredClone(props.config));
 // プロパティの更新がループしてしまうことを防ぐ
-let isInternalSync = false; // 操作中フラグ (ユーザーが直接プロパティを操作している時は親からの更新を受け付けない)
+let isChangingByUI = false; // 操作中フラグ (ユーザーが直接プロパティを操作している時は親からの更新を受け付けない)
+let isSyncingFromStore = false; // ストア（親）からの変更を適用している最中か
 
 // 親の値が変わった時に、ローカル値を更新する
 watch(
   () => props.config,
   (newVal) => {
-    if (isInternalSync) return; // ユーザーが入力中のときは何もしない
+    if (isChangingByUI) return; // ユーザーが入力中のときは何もしない
+    isSyncingFromStore = true; // 「ストアからの同期を開始」
     localConfig.value = structuredClone(newVal);
+
+    nextTick(() => {
+      isSyncingFromStore = false; // 同期終了
+    });
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 
 // 入力イベント：親へ変更を通知
@@ -31,18 +37,17 @@ watch(
   () => localConfig.value,
   (newVal) => {
     // もし「親からの更新」によってここが動いた場合は、再送(emit)しない
-    if (isInternalSync) return;
+    if (isSyncingFromStore) return;
 
     // --- ここから送信処理 ---
-    isInternalSync = true; // ロックをかける
+    isChangingByUI = true; // ロックをかける
 
     const clonedData = structuredClone(toRaw(newVal));
-    console.log(clonedData);
     emit("update:config", clonedData);
 
     // ストア経由で props が戻ってくるまでの時間を考慮して nextTick で解除
     nextTick(() => {
-      isInternalSync = false; // ロックを解除
+      isChangingByUI = false; // ロックを解除
     });
   },
   { deep: true },
