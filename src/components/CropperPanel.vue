@@ -8,6 +8,7 @@ import {
   convertViewToSource,
   convertSourceToView,
 } from "../utils/pixelConverter";
+import { CROP_MODES } from "../constants/cropModes";
 
 const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -57,25 +58,35 @@ watch(
   (newConfig, oldConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
 
-    // 前回の設定値と今回の設定値が全く同じなら、Vueの誤検知として無視する
-    if (
-      JSON.stringify(newConfig.selection) ===
-      JSON.stringify(oldConfig?.selection)
-    ) {
-      return;
+    // セレクションのアスペクト比の設定
+    const targetRatio =
+      newConfig.mode === CROP_MODES.RATIO ||
+      newConfig.mode === CROP_MODES.FIXED_SIZE
+        ? newConfig.aspectRatio
+        : null;
+
+    // 現在のCropperの比率と異なる場合のみ更新
+    const selection = cropper.getCropperSelection();
+    if (selection.aspectRatio !== targetRatio) {
+      selection.aspectRatio = targetRatio;
     }
 
     const context = getTransformationContext(cropper);
-    const selection = cropper.getCropperSelection();
     const sourceSelection = convertSourceToView(newConfig.selection, context);
+    // 座標が実際に異なるかチェック（x, y, width, height のどれかが違うか）
+    const isPositionChanged = ["x", "y", "width", "height"].some(
+      (key) => Math.abs(selection[key] - sourceSelection[key]) > 0.001, // 誤差を許容
+    );
 
-    isInternalSync = true;
-    // 座標の反映
-    Object.assign(selection, sourceSelection);
+    if (isPositionChanged) {
+      isInternalSync = true;
+      // 座標を一括反映
+      Object.assign(selection, sourceSelection);
 
-    nextTick(() => {
-      isInternalSync = false;
-    });
+      nextTick(() => {
+        isInternalSync = false;
+      });
+    }
   },
   { deep: true },
 );
@@ -125,6 +136,9 @@ const handleUpdateConfig = (newConfig) => {
   // コンテキスト取得
   const context = getTransformationContext(cropper);
   if (!context) return;
+
+  console.log("from propBar");
+  console.log(newConfig);
 
   // ストア更新 (プロパティバーの値をそのまま適用)
   imagesStore.updatePreviewConfig(props.image.previewUrl, {
