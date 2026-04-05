@@ -142,7 +142,7 @@ watch(
       "
       class="input-group"
     >
-      <input type="checkbox" :value="isRatioFixed" />
+      <input type="checkbox" v-model="isRatioFixed" />
       <label>縦横比を固定</label>
     </div>
 
