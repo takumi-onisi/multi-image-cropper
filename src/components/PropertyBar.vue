@@ -87,13 +87,15 @@ watch(
     if (mode === CROP_MODES.FIXED_SIZE) {
       // --- FIXED_SIZE モード：現在のセレクションサイズから比率を固定 ---
       if (selectW > 0 && selectH > 0) {
+        localConfig.value.mode.CROP_MODES.FIXED_SIZE;
         targetRatio = selectW / selectH;
       }
     } else {
       // --- FREE (RATIO) モード：専用入力欄とチェックボックスを参照 ---
       const hasBothValues = ratioW > 0 && ratioH > 0;
       if (hasBothValues && fixed) {
-        // 比率を固定が選択されているかチェック
+        // 比率を固定が選択されている
+        localConfig.value.mode = CROP_MODES.RATIO;
         targetRatio = ratioW / ratioH;
       }
     }
