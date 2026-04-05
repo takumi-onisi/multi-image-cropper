@@ -101,11 +101,11 @@ export const useImagesStore = defineStore("images", () => {
   const setGlobalConfig = (config) => {
     // 渡されたconfigが必要な要件を満たしていることを確認
     assertCropConfig(config);
-
     // グローバル設定(マスター)を更新
     Object.assign(
       globalConfig.value,
       createCropConfig({
+        ...globalConfig.value,
         ...config,
       }),
     );
@@ -121,6 +121,7 @@ export const useImagesStore = defineStore("images", () => {
     Object.assign(
       individualCropConfig.value,
       createCropConfig({
+        ...individualCropConfig.value,
         ...config,
       }),
     );
