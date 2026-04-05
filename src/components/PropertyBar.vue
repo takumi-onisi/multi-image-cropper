@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick, toRaw } from "vue";
+import { ref, watch, nextTick, toRaw, computed } from "vue";
 import { CROP_MODES } from "../constants/cropModes";
 
 const props = defineProps({
@@ -68,6 +68,29 @@ watch(
   },
 );
 
+// プルダウンに表示するための「見た目上のモード」
+const displayMode = computed({
+  get() {
+    // 内部が FREE または RATIO のときは、プルダウンでは「比率」に見せる
+    if (
+      localConfig.value.mode === CROP_MODES.FREE ||
+      localConfig.value.mode === CROP_MODES.RATIO
+    ) {
+      return "RATIO_GROUP";
+    }
+    return localConfig.value.mode;
+  },
+  set(val) {
+    // プルダウンで「比率」が選ばれたら、とりあえず FREE にしておく
+    // その後、チェックボックスの watch ロジックが RATIO にすべきか判断する
+    if (val === "RATIO_GROUP") {
+      localConfig.value.mode = CROP_MODES.FREE;
+    } else {
+      localConfig.value.mode = val;
+    }
+  },
+});
+
 // アスペクト比の計算とモードの連動
 watch(
   [
@@ -81,28 +104,35 @@ watch(
   ([mode, fixed, ratioW, ratioH, selectW, selectH]) => {
     if (isSyncingFromStore) return;
 
+    let nextMode = mode; // 現在のモードを保持
     let targetRatio = null;
 
     // 縦横比の計算
     if (mode === CROP_MODES.FIXED_SIZE) {
       // --- FIXED_SIZE モード：現在のセレクションサイズから比率を固定 ---
       if (selectW > 0 && selectH > 0) {
-        localConfig.value.mode.CROP_MODES.FIXED_SIZE;
         targetRatio = selectW / selectH;
       }
     } else {
-      // --- FREE (RATIO) モード：専用入力欄とチェックボックスを参照 ---
+      // 比率グループ内での切り替えロジック
       const hasBothValues = ratioW > 0 && ratioH > 0;
       if (hasBothValues && fixed) {
-        // 比率を固定が選択されている
-        localConfig.value.mode = CROP_MODES.RATIO;
+        // 「比率を固定」が選択されている
+        nextMode = CROP_MODES.RATIO;
         targetRatio = ratioW / ratioH;
+      } else {
+        nextMode = CROP_MODES.FREE;
+        targetRatio = null;
       }
     }
 
-    // ストア側の aspectRatio を更新（変更があれば emitUpdate が走る）
-    if (localConfig.value.aspectRatio !== targetRatio) {
-      localConfig.value.aspectRatio = targetRatio;
+    // モードまたは比率が変わった場合のみ更新
+    if (
+      localConfig.value.mode !== nextMode ||
+      localConfig.value.aspectRatio !== targetRatio
+    ) {
+      localConfig.value.mode = nextMode;
+      localConfig.value.aspectRatio = targetRatio; // aspectRatio を更新
       emitUpdate();
     }
   },
@@ -112,40 +142,25 @@ watch(
 <template>
   <div class="property-bar">
     <div class="input-group">
-      <select v-model="localConfig.mode">
-        <option :value="CROP_MODES.FREE" selected>比率(自由/固定)</option>
+      <select v-model="displayMode">
+        <option value="RATIO_GROUP">比率</option>
         <option :value="CROP_MODES.FIXED_SIZE">幅 × 高さ × 解像度</option>
       </select>
     </div>
-    <div
-      v-if="
-        localConfig.mode === CROP_MODES.FREE ||
-        localConfig.mode === CROP_MODES.RATIO
-      "
-      class="input-group"
-    >
-      <label>幅 :</label>
-      <input type="number" v-model.number="aspectRatio.width" />
-    </div>
-    <div
-      v-if="
-        localConfig.mode === CROP_MODES.FREE ||
-        localConfig.mode === CROP_MODES.RATIO
-      "
-      class="input-group"
-    >
-      <label>高さ :</label>
-      <input type="number" v-model.number="aspectRatio.height" />
-    </div>
-    <div
-      v-if="
-        localConfig.mode === CROP_MODES.FREE ||
-        localConfig.mode === CROP_MODES.RATIO
-      "
-      class="input-group"
-    >
-      <input type="checkbox" v-model="isRatioFixed" />
-      <label>縦横比を固定</label>
+
+    <div v-if="displayMode === 'RATIO_GROUP'" class="ratio_group">
+      <div class="input-group">
+        <label>幅 :</label>
+        <input type="number" v-model.number="aspectRatio.width" />
+      </div>
+      <div class="input-group">
+        <label>高さ :</label>
+        <input type="number" v-model.number="aspectRatio.height" />
+      </div>
+      <div class="input-group">
+        <input type="checkbox" v-model="isRatioFixed" />
+        <label>縦横比を固定</label>
+      </div>
     </div>
 
     <div class="divider"></div>
@@ -185,6 +200,12 @@ watch(
   min-height: 40px; /* 高さを一定に保つ */
   font-size: 13px;
   color: #333;
+}
+
+.ratio_group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .input-group {
