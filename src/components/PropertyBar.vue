@@ -145,25 +145,28 @@ watch(
       <input type="checkbox" :value="isRatioFixed" />
       <label>縦横比を固定</label>
     </div>
+
+    <div class="divider"></div>
+
     <div class="input-group">
       <label>X :</label>
       <input type="number" v-model.number="localConfig.selection.x" />
-      px
+      <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>Y :</label>
       <input type="number" v-model.number="localConfig.selection.y" />
-      px
+      <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>幅 :</label>
       <input type="number" v-model.number="localConfig.selection.width" />
-      px
+      <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>高さ :</label>
       <input type="number" v-model.number="localConfig.selection.height" />
-      px
+      <span class="unit">px</span>
     </div>
   </div>
 </template>
@@ -171,13 +174,64 @@ watch(
 <style scoped>
 .property-bar {
   display: flex;
-  gap: 10px;
-  padding: 10px;
+  flex-wrap: wrap; /* 折り返しを許可 */
+  align-items: center;
+  gap: 8px 16px; /* 横の隙間と、折り返した時の縦の隙間 */
+  padding: 4px 12px;
   background: #f4f4f4;
-  border-radius: 4px;
+  border-bottom: 1px solid #ccc;
+  min-height: 40px; /* 高さを一定に保つ */
+  font-size: 13px;
+  color: #333;
 }
+
 .input-group {
   display: flex;
-  /* flex-direction: column; */
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap; /* ラベルの改行を防ぐ */
+}
+
+/* 入力欄のサイズを制限 */
+.input-group input[type="number"] {
+  width: 70px; /* 7桁程度が入る幅 */
+  height: 24px; /* 高さを固定 */
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background: #fff;
+  font-family: monospace; /* 数字を見やすく */
+}
+
+/* 単位(px)のラベル */
+.unit {
+  font-size: 11px;
+  color: #666;
+  margin-left: -2px;
+}
+
+/* 区切り線：PCでは縦線、スマホ(狭い画面)では非表示にして改行を促す */
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+  margin: 0 4px;
+}
+
+/* レスポンシブ設定：画面幅が狭い時（例：800px以下） */
+@media (max-width: 850px) {
+  .divider {
+    display: none; /* 区切り線を消す */
+  }
+
+  /* 2段に分けるためのダミー要素（dividerの代わりに挿入するイメージ） */
+  /* もしくは divider の位置で強制改行させる場合 */
+  .divider {
+    display: block;
+    width: 100%; /* 横幅いっぱいに広げて強制改行させる */
+    height: 0;
+    background: transparent;
+    margin: 0;
+  }
 }
 </style>
