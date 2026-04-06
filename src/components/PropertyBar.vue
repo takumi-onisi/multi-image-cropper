@@ -93,10 +93,10 @@ watch(
     () => isRatioFixed.value,
     () => aspectRatio.value.width,
     () => aspectRatio.value.height,
-    () => localConfig.value.selection.width,
-    () => localConfig.value.selection.height,
+    () => localConfig.value.targetSize.width,
+    () => localConfig.value.targetSize.height,
   ],
-  ([mode, fixed, ratioW, ratioH, selectW, selectH]) => {
+  ([mode, fixed, ratioW, ratioH, targetW, targetH]) => {
     if (isSyncingFromStore) return;
 
     let nextMode = mode; // 現在のモードを保持
@@ -105,8 +105,8 @@ watch(
     // 縦横比の計算
     if (mode === CROP_MODES.FIXED_SIZE) {
       // --- FIXED_SIZE モード：現在のセレクションサイズから比率を固定 ---
-      if (selectW > 0 && selectH > 0) {
-        targetRatio = selectW / selectH;
+      if (targetW > 0 && targetH > 0) {
+        targetRatio = targetW / targetH;
       }
     } else {
       // 比率グループ内での切り替えロジック
