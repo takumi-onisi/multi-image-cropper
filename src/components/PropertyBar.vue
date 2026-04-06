@@ -142,7 +142,7 @@ watch(
       </select>
     </div>
 
-    <div v-if="displayMode === 'RATIO_GROUP'" class="ratio_group">
+    <div v-if="displayMode === 'RATIO_GROUP'" class="input-group-container">
       <div class="input-group">
         <label>幅 :</label>
         <input type="number" v-model.number="aspectRatio.width" />
@@ -152,8 +152,26 @@ watch(
         <input type="number" v-model.number="aspectRatio.height" />
       </div>
       <div class="input-group">
-        <input type="checkbox" v-model="isRatioFixed" />
-        <label>縦横比を固定</label>
+        <input type="checkbox" v-model="isRatioFixed" id="fix-ratio" />
+        <label for="fix-ratio">縦横比を固定</label>
+      </div>
+    </div>
+
+    <div
+      v-else-if="displayMode === CROP_MODES.FIXED_SIZE"
+      class="input-group-container"
+    >
+      <div class="input-group">
+        <label>幅 :</label>
+        <input type="number" v-model.number="localConfig.targetSize.width" />
+      </div>
+      <div class="input-group">
+        <label>高さ :</label>
+        <input type="number" v-model.number="localConfig.targetSize.height" />
+      </div>
+      <div class="input-group">
+        <label>解像度 :</label>
+        <input type="number" v-model.number="localConfig.resolution" />
       </div>
     </div>
 
@@ -196,7 +214,8 @@ watch(
   color: #333;
 }
 
-.ratio_group {
+.ratio_group,
+.input-group-container {
   display: flex;
   align-items: center;
   gap: 4px;
