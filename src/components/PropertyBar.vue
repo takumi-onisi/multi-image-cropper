@@ -56,16 +56,11 @@ const emitUpdate = () => {
 
 // 座標やサイズなど、直接的な値の変更を監視
 watch(
-  [
-    () => localConfig.value.selection.x,
-    () => localConfig.value.selection.y,
-    () => localConfig.value.selection.width,
-    () => localConfig.value.selection.height,
-    () => localConfig.value.mode,
-  ],
+  () => localConfig.value,
   () => {
     emitUpdate();
   },
+  { deep: true },
 );
 
 // プルダウンに表示するための「見た目上のモード」
@@ -133,7 +128,6 @@ watch(
     ) {
       localConfig.value.mode = nextMode;
       localConfig.value.aspectRatio = targetRatio; // aspectRatio を更新
-      emitUpdate();
     }
   },
 );
