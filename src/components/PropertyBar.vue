@@ -215,22 +215,31 @@ watch(
 
     <div class="input-group">
       <label>X :</label>
-      <input type="number" v-model.number="localConfig.selection.x" />
+      <input type="number" v-model.number="displaySelection.x" />
       <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>Y :</label>
-      <input type="number" v-model.number="localConfig.selection.y" />
+      <input type="number" v-model.number="displaySelection.y" />
       <span class="unit">px</span>
     </div>
+
     <div class="input-group">
       <label>幅 :</label>
-      <input type="number" v-model.number="localConfig.selection.width" />
+      <input
+        type="number"
+        v-model.number="displaySelection.width"
+        :disabled="displayMode === CROP_MODES.FIXED_SIZE"
+      />
       <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>高さ :</label>
-      <input type="number" v-model.number="localConfig.selection.height" />
+      <input
+        type="number"
+        v-model.number="displaySelection.height"
+        :disabled="displayMode === CROP_MODES.FIXED_SIZE"
+      />
       <span class="unit">px</span>
     </div>
   </div>
@@ -254,7 +263,7 @@ watch(
 .input-group-container {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px; /* グループ内の要素間隔 */
 }
 
 .input-group {
@@ -273,6 +282,13 @@ watch(
   border-radius: 2px;
   background: #fff;
   font-family: monospace; /* 数字を見やすく */
+}
+
+input:disabled {
+  background-color: #eee;
+  color: #888;
+  border-color: #ddd;
+  cursor: not-allowed;
 }
 
 /* 単位(px)のラベル */
