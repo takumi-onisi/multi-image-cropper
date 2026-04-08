@@ -1,8 +1,9 @@
 import { loadImage } from "./imageLoader";
+import { CROP_MODES } from "../constants/cropModes";
 /**
  * fileと設定から切り抜き済みCanvasを生成する
  * @param {object} file - ストアに保存された画像情報
- * @param {object} cropConfig - 切り抜き設定 {x, y, width, height}
+ * @param {object} cropConfig - 切り抜き設定 {mode, selection, targetSize}
  * @returns {Promise<HTMLCanvasElement>} 切り抜かれたCanvas要素
  */
 export async function performCropping(file, cropConfig) {
@@ -10,15 +11,33 @@ export async function performCropping(file, cropConfig) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
-  // ストアにある「整数値」をそのまま使う
-  const { x, y, width, height } = cropConfig;
+  // モード判定
+  const isFixedSize = cropConfig.mode === CROP_MODES.FIXED_SIZE;
 
-  canvas.width = width;
-  canvas.height = height;
+  // 1. Canvasのサイズ（出力サイズ）を決定
+  if (isFixedSize && cropConfig.targetSize) {
+    // 固定サイズモード：指定されたターゲットサイズにする
+    canvas.width = cropConfig.targetSize.width;
+    canvas.height = cropConfig.targetSize.height;
+  } else {
+    // 比率/自由モード：セレクションの大きさをそのまま使う
+    canvas.width = cropConfig.selection.width;
+    canvas.height = cropConfig.selection.height;
+  }
 
+  // 描画
   // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-  // 元画像の (x, y) から (width, height) 分を、Canvasの (0, 0) に描画
-  ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
+  ctx.drawImage(
+    img,
+    cropConfig.selection.x, // sx: ソースの開始X
+    cropConfig.selection.y, // sy: ソースの開始Y
+    cropConfig.selection.width, // sWidth: ソースの幅
+    cropConfig.selection.height, // sHeight: ソースの高さ
+    0, // dx: Canvas内の描画開始X
+    0, // dy: Canvas内の描画開始Y
+    canvas.width, // dWidth: Canvas内での描画幅（ここでリサイズされる）
+    canvas.height, // dHeight: Canvas内での描画高さ
+  );
   return canvas;
 }
 
