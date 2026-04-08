@@ -16,6 +16,7 @@ const localConfig = ref(structuredClone(props.config));
 // プロパティの更新がループしてしまうことを防ぐ
 let isChangingByUI = false; // 操作中フラグ (ユーザーが直接プロパティを操作している時は親からの更新を受け付けない)
 let isSyncingFromStore = false; // ストア（親）からの変更を適用している最中か
+let isUpdatePending = false; // 予約フラグ (コンポーネント内のリアクティブの一連の変更を待って最終的な値をイベントアップするためのフラグ)
 
 // プロパティバーの縦横比を保持
 const aspectRatio = ref({
@@ -43,14 +44,17 @@ watch(
 // 入力イベント：親へ変更を通知
 const emitUpdate = () => {
   // もし「親からの更新」によってここが動いた場合は、再送(emit)しない
-  if (isSyncingFromStore) return;
+  // nextTickで更新が終わるまでは新しくイベントアップしない
+  if (isSyncingFromStore || isUpdatePending) return;
 
   // --- ここから送信処理 ---
   isChangingByUI = true; // ロックをかける
-  emit("update:config", structuredClone(toRaw(localConfig.value)));
+  isUpdatePending = true; // 更新を予約する
   nextTick(() => {
+    emit("update:config", structuredClone(toRaw(localConfig.value)));
     // ストア経由で props が戻ってくるまでの時間を考慮して nextTick で解除
     isChangingByUI = false; // ロックを解除
+    isUpdatePending = false; // 予約解除
   });
 };
 
