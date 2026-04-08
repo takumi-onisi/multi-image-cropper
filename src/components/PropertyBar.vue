@@ -24,7 +24,7 @@ const aspectRatio = ref({
   height: null,
 });
 // 縦横比の値を固定するかどうか
-let isRatioFixed = ref(false);
+let isRatioFixed = ref(true);
 
 // 親の値が変わった時に、ローカル値を更新する
 watch(
