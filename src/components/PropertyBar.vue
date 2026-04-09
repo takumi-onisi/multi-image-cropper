@@ -90,40 +90,51 @@ const displayMode = computed({
   },
 });
 
-const displaySelection = computed({
-  get() {
-    const { selection, targetSize, mode } = localConfig.value;
+const displaySelection = computed(() => {
+  const { selection, targetSize, mode } = localConfig.value;
 
-    // 自由モードならそのままの値を返す
-    if (mode !== CROP_MODES.FIXED_SIZE) {
-      return selection;
-    }
+  // 自由モードならそのままの値を返す
+  if (mode !== CROP_MODES.FIXED_SIZE) {
+    return selection;
+  }
 
-    // 固定サイズモード時のスケール計算 (target / selection_view)
-    // セレクションの枠が「出力サイズに対してどの位置にあるか」
-    // 0除算を防ぐため || 1 を入れている
-    const scale = targetSize.width / (selection.width || 1);
+  // 固定サイズモード時のスケール計算 (target / selection_view)
+  // セレクションの枠が「出力サイズに対してどの位置にあるか」
+  // 0除算を防ぐため || 1 を入れている
+  const scale = targetSize.width / (selection.width || 1);
 
-    return {
-      x: Math.round(selection.x * scale),
-      y: Math.round(selection.y * scale),
-      width: targetSize.width,
-      height: targetSize.height,
-    };
-  },
-  set(newVal) {
-    if (localConfig.value.mode !== CROP_MODES.FIXED_SIZE) {
-      localConfig.value.selection = newVal;
-    } else {
-      // X, Yのみ逆計算して反映
-      const scale =
-        localConfig.value.targetSize.width /
-        (localConfig.value.selection.width || 1);
-      localConfig.value.selection.x = newVal.x / scale;
-      localConfig.value.selection.y = newVal.y / scale;
-    }
-    // emitUpdateは watch(localConfig) が検知して行うのでここでは不要
-  },
+  return {
+    x: Math.round(selection.x * scale),
+    y: Math.round(selection.y * scale),
+    width: targetSize.width,
+    height: targetSize.height,
+  };
+});
+
+// displaySelection用の共通の逆計算ロジック
+const updateCoord = (key, value) => {
+  if (localConfig.value.mode !== CROP_MODES.FIXED_SIZE) {
+    localConfig.value.selection[key] = value;
+  } else {
+    // スケールを計算して逆算
+    const scale =
+      localConfig.value.targetSize.width /
+      (localConfig.value.selection.width || 1);
+    localConfig.value.selection[key] = value / scale;
+  }
+  // emitUpdateは watch(localConfig) が検知して行うのでここでは不要
+};
+
+// v-model 用の個別 computed
+const inputX = computed({
+  get: () => displaySelection.value.x,
+  set: (val) => updateCoord("x", val),
+});
+
+// v-model 用の個別 computed
+const inputY = computed({
+  get: () => displaySelection.value.y,
+  set: (val) => updateCoord("y", val),
 });
 
 // アスペクト比の計算とモードの連動
@@ -219,12 +230,12 @@ watch(
 
     <div class="input-group">
       <label>X :</label>
-      <input type="number" v-model.number="displaySelection.x" />
+      <input type="number" v-model.number="inputX" />
       <span class="unit">px</span>
     </div>
     <div class="input-group">
       <label>Y :</label>
-      <input type="number" v-model.number="displaySelection.y" />
+      <input type="number" v-model.number="inputY" />
       <span class="unit">px</span>
     </div>
 
