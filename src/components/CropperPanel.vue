@@ -137,9 +137,6 @@ const handleUpdateConfig = (newConfig) => {
   const context = getTransformationContext(cropper);
   if (!context) return;
 
-  console.log("from propBar");
-  console.log(newConfig);
-
   // ストア更新 (プロパティバーの値をそのまま適用)
   imagesStore.updatePreviewConfig(props.image.previewUrl, {
     ...newConfig,
