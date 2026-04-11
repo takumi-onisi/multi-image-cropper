@@ -17,12 +17,6 @@ const localConfig = ref(structuredClone(props.config));
 let isChangingByUI = false; // 操作中フラグ (ユーザーが直接プロパティを操作している時は親からの更新を受け付けない)
 let isSyncingFromStore = false; // ストア（親）からの変更を適用している最中か
 let isUpdatePending = false; // 予約フラグ (コンポーネント内のリアクティブの一連の変更を待って最終的な値をイベントアップするためのフラグ)
-
-// プロパティバーの縦横比を保持
-const aspectRatio = ref({
-  width: null,
-  height: null,
-});
 // 縦横比の値を固定するかどうか
 let isRatioFixed = ref(true);
 
@@ -137,48 +131,27 @@ const inputY = computed({
   set: (val) => updateCoord("y", val),
 });
 
-// アスペクト比の計算とモードの連動
+// モードの切り替え
 watch(
   [
     () => localConfig.value.mode,
     () => isRatioFixed.value,
-    () => aspectRatio.value.width,
-    () => aspectRatio.value.height,
-    () => localConfig.value.targetSize.width,
-    () => localConfig.value.targetSize.height,
+    () => localConfig.value.ratio.width,
+    () => localConfig.value.ratio.height,
   ],
-  ([mode, fixed, ratioW, ratioH, targetW, targetH]) => {
+  ([mode, fixed]) => {
     if (isSyncingFromStore) return;
 
-    let nextMode = mode; // 現在のモードを保持
-    let targetRatio = null;
-
-    // 縦横比の計算
+    let nextMode = mode;
     if (mode === CROP_MODES.FIXED_SIZE) {
-      // --- FIXED_SIZE モード：現在のセレクションサイズから比率を固定 ---
-      if (targetW > 0 && targetH > 0) {
-        targetRatio = targetW / targetH;
-      }
+      nextMode = CROP_MODES.FIXED_SIZE;
     } else {
-      // 比率グループ内での切り替えロジック
-      const hasBothValues = ratioW > 0 && ratioH > 0;
-      if (hasBothValues && fixed) {
-        // 「比率を固定」が選択されている
-        nextMode = CROP_MODES.RATIO;
-        targetRatio = ratioW / ratioH;
-      } else {
-        nextMode = CROP_MODES.FREE;
-        targetRatio = null;
-      }
+      nextMode = fixed ? CROP_MODES.RATIO : CROP_MODES.FREE;
     }
 
     // モードまたは比率が変わった場合のみ更新
-    if (
-      localConfig.value.mode !== nextMode ||
-      localConfig.value.aspectRatio !== targetRatio
-    ) {
-      localConfig.value.mode = nextMode;
-      localConfig.value.aspectRatio = targetRatio; // aspectRatio を更新
+    if (localConfig.value.mode !== nextMode) {
+      localConfig.value.mode = nextMode; // モードを更新
     }
   },
 );
@@ -196,11 +169,11 @@ watch(
     <div v-if="displayMode === 'RATIO_GROUP'" class="input-group-container">
       <div class="input-group">
         <label>幅 :</label>
-        <input type="number" v-model.number="aspectRatio.width" />
+        <input type="number" v-model.number="localConfig.ratio.width" />
       </div>
       <div class="input-group">
         <label>高さ :</label>
-        <input type="number" v-model.number="aspectRatio.height" />
+        <input type="number" v-model.number="localConfig.ratio.height" />
       </div>
       <div class="input-group">
         <input type="checkbox" v-model="isRatioFixed" id="fix-ratio" />
