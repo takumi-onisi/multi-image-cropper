@@ -199,6 +199,10 @@ export const useImagesStore = defineStore("images", () => {
     return {
       ...DEFAULT_CROP_CONFIG,
       ...base,
+      ratio: {
+        ...DEFAULT_CROP_CONFIG.ratio,
+        ...base.ratio,
+      },
       targetSize: {
         ...DEFAULT_CROP_CONFIG.targetSize,
         ...base.targetSize,
