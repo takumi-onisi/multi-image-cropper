@@ -9,6 +9,7 @@ import {
   convertSourceToView,
 } from "../utils/pixelConverter";
 import { CROP_MODES } from "../constants/cropModes";
+import { calculateAspectRatio } from "../utils/cropCalculator";
 
 const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -69,7 +70,7 @@ const applyConfigToCropper = (cropper, config) => {
   // アスペクト比を取得
   const targetRatio =
     config.mode === CROP_MODES.RATIO || config.mode === CROP_MODES.FIXED_SIZE
-      ? config.aspectRatio
+      ? calculateAspectRatio(config)
       : null;
 
   // 現在のCropperの比率と異なる場合のみ更新
