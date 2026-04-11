@@ -9,6 +9,7 @@ import {
   convertSourceToView,
 } from "../utils/pixelConverter";
 import { CROP_MODES } from "../constants/cropModes";
+import { calculateAspectRatio } from "../utils/cropCalculator";
 
 const imagesStore = useImagesStore();
 const imageElement = useTemplateRef("imageElement");
@@ -28,6 +29,10 @@ const initCropper = () => {
   if (!imageElement.value) return;
 
   cropper = new Cropper(imageElement.value, { template: CROPPER_TEMPLATE });
+  // 切り抜き設定を反映
+  const config = imagesStore.getFileCropConfig(props.image.previewUrl);
+  applyConfigToCropper(cropper, config);
+
   // Cropper側の変更をストアに送る
   const syncToStore = () => {
     if (isInternalSync) return; // watch経由の更新なら無視する
@@ -52,41 +57,50 @@ const initCropper = () => {
   cropper.getCropperImage().addEventListener("transform", syncToStore);
 };
 
+/**
+ * ストアのconfigをCropperに反映させる共通ロジック
+ * @param {Object} cropperInstance - 適用先のCropperインスタンス
+ * @param {Object} config - 反映したい設定値
+ */
+const applyConfigToCropper = (cropper, config) => {
+  isInternalSync = true; // 反映中は同期ロックをかける
+
+  const selection = cropper.getCropperSelection();
+
+  // アスペクト比を取得
+  const targetRatio =
+    config.mode === CROP_MODES.RATIO || config.mode === CROP_MODES.FIXED_SIZE
+      ? calculateAspectRatio(config)
+      : null;
+
+  // 現在のCropperの比率と異なる場合のみ更新
+  if (selection.aspectRatio !== targetRatio) {
+    selection.aspectRatio = targetRatio;
+  }
+
+  const context = getTransformationContext(cropper);
+  const sourceSelection = convertSourceToView(config.selection, context);
+  // 座標が実際に異なるかチェック（x, y, width, height のどれかが違うか）
+  const isPositionChanged = ["x", "y", "width", "height"].some(
+    (key) => Math.abs(selection[key] - sourceSelection[key]) > 0.001, // 誤差を許容
+  );
+
+  if (isPositionChanged) {
+    Object.assign(selection, sourceSelection);
+  }
+
+  // ロック解除（nextTickで囲むことで同期処理終了を待つ）
+  nextTick(() => {
+    isInternalSync = false;
+  });
+};
+
 // 2. ストアの変更をCropperに反映する
 watch(
   () => imagesStore.getFileCropConfig(props.image.previewUrl),
-  (newConfig, oldConfig) => {
+  (newConfig) => {
     if (isInternalSync || !cropper) return; // 自分が原因の更新なら無視する
-
-    // セレクションのアスペクト比の設定
-    const targetRatio =
-      newConfig.mode === CROP_MODES.RATIO ||
-      newConfig.mode === CROP_MODES.FIXED_SIZE
-        ? newConfig.aspectRatio
-        : null;
-
-    // 現在のCropperの比率と異なる場合のみ更新
-    const selection = cropper.getCropperSelection();
-    if (selection.aspectRatio !== targetRatio) {
-      selection.aspectRatio = targetRatio;
-    }
-
-    const context = getTransformationContext(cropper);
-    const sourceSelection = convertSourceToView(newConfig.selection, context);
-    // 座標が実際に異なるかチェック（x, y, width, height のどれかが違うか）
-    const isPositionChanged = ["x", "y", "width", "height"].some(
-      (key) => Math.abs(selection[key] - sourceSelection[key]) > 0.001, // 誤差を許容
-    );
-
-    if (isPositionChanged) {
-      isInternalSync = true;
-      // 座標を一括反映
-      Object.assign(selection, sourceSelection);
-
-      nextTick(() => {
-        isInternalSync = false;
-      });
-    }
+    applyConfigToCropper(cropper, newConfig);
   },
   { deep: true },
 );
@@ -136,9 +150,6 @@ const handleUpdateConfig = (newConfig) => {
   // コンテキスト取得
   const context = getTransformationContext(cropper);
   if (!context) return;
-
-  console.log("from propBar");
-  console.log(newConfig);
 
   // ストア更新 (プロパティバーの値をそのまま適用)
   imagesStore.updatePreviewConfig(props.image.previewUrl, {
