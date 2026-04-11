@@ -1,3 +1,4 @@
+import { CROP_MODES } from "../constants/cropModes";
 /**
  * 設定からアスペクト比を計算する
  */
