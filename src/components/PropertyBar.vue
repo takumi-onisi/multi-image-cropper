@@ -162,7 +162,7 @@ watch(
     <div class="input-group">
       <select v-model="displayMode">
         <option value="RATIO_GROUP">比率</option>
-        <option :value="CROP_MODES.FIXED_SIZE">幅 × 高さ × 解像度</option>
+        <option :value="CROP_MODES.FIXED_SIZE">幅 × 高さ</option>
       </select>
     </div>
 
@@ -192,10 +192,6 @@ watch(
       <div class="input-group">
         <label>高さ :</label>
         <input type="number" v-model.number="localConfig.targetSize.height" />
-      </div>
-      <div class="input-group">
-        <label>解像度 :</label>
-        <input type="number" disabled v-model.number="localConfig.resolution" />
       </div>
     </div>
 
