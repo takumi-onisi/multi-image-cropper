@@ -195,7 +195,7 @@ watch(
       </div>
       <div class="input-group">
         <label>解像度 :</label>
-        <input type="number" v-model.number="localConfig.resolution" />
+        <input type="number" disabled v-model.number="localConfig.resolution" />
       </div>
     </div>
 
