@@ -9,5 +9,4 @@ export const DEFAULT_CROP_CONFIG = {
   targetSize: { width: 0, height: 0 },
   selection: { x: 0, y: 0, width: 0, height: 0 },
   transform: [1, 0, 0, 1, 0, 0],
-  exportType: EXPORT_TYPES.PNG,
 };
