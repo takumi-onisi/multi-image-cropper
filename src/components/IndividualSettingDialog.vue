@@ -26,7 +26,7 @@ const handleCommit = () => {
 };
 
 const handleCancel = () => {
-  imagesStore.clearActiveCropConfig();
+  imagesStore.resetIndividualEditState();
   emit("close");
 };
 </script>

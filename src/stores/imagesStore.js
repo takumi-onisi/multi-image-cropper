@@ -208,8 +208,11 @@ export const useImagesStore = defineStore("images", () => {
     if (file) {
       // 保存
       file.cropConfig = JSON.parse(JSON.stringify(individualCropConfig.value));
+      file.exportSettings = JSON.parse(
+        JSON.stringify(individualExportSettings.value),
+      );
       // 値をクリア
-      clearActiveCropConfig();
+      resetIndividualEditState();
     }
   };
 
@@ -220,16 +223,23 @@ export const useImagesStore = defineStore("images", () => {
     // 現在の値をコピーして「編集用」に入れる
     if (file?.cropConfig) {
       individualCropConfig.value = JSON.parse(JSON.stringify(file.cropConfig));
+      individualExportSettings.value = JSON.parse(
+        JSON.stringify(file.exportSettings),
+      );
     } else {
       // 初期値（globalConfigの内容）をセット
       individualCropConfig.value = createCropConfig(globalConfig.value);
+      individualExportSettings.value = JSON.parse(
+        JSON.stringify(globalExportSettings.value),
+      );
     }
   };
 
-  const clearActiveCropConfig = () => {
+  const resetIndividualEditState = () => {
     activePreviewUrl.value = null;
     // 初期値（globalConfigの内容）をセット
     individualCropConfig.value = createCropConfig(globalConfig.value);
+    individualExportSettings.value = createExportSettings(globalExportSettings);
   };
 
   const clearFileCropConfig = (previewUrl) => {
@@ -288,7 +298,7 @@ export const useImagesStore = defineStore("images", () => {
     updateExportSettings,
     commitIndividualEdit,
     prepareIndividualEdit,
-    clearActiveCropConfig,
+    resetIndividualEditState,
     clearFileCropConfig,
   };
 });
