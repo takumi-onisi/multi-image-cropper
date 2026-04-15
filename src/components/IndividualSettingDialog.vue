@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import CropperPanel from "../components/CropperPanel.vue";
+import ExportTypeSelector from "./ExportTypeSelector.vue";
 
 const props = defineProps({
   file: { type: Object, required: true },
@@ -45,6 +46,7 @@ const handleCancel = () => {
         </main>
 
         <footer class="modal-footer">
+          <ExportTypeSelector :file="file" />
           <button class="btn-primary" @click="handleCommit">完了</button>
         </footer>
       </div>

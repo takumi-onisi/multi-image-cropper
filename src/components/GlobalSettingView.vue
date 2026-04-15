@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import CropperPanel from "./CropperPanel.vue";
 import CropExecuteButton from "./CropExecuteButton.vue";
+import ExportTypeSelector from "./ExportTypeSelector.vue";
 
 const imagesStore = useImagesStore();
 </script>
@@ -15,6 +16,7 @@ const imagesStore = useImagesStore();
 
   <div v-if="imagesStore.globalPreviewFile" class="button-area">
     <CropExecuteButton />
+    <ExportTypeSelector :file="imagesStore.globalPreviewFile" />
   </div>
 </template>
 
