@@ -24,10 +24,11 @@ const handleProcessAll = async () => {
       // 切り抜き実行
       const cropConfig = imagesStore.getFileCropConfig(fileItem.previewUrl);
       const canvas = await performCropping(fileItem, cropConfig);
+      const exportSetting = imagesStore.getExportSettings(fileItem.previewUrl);
       results.push({
         name: fileItem.name,
         canvas: canvas,
-        exportType: cropConfig.exportType,
+        exportType: exportSetting.exportType,
       });
     }
 
