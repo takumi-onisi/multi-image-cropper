@@ -5,12 +5,15 @@ import {
   GLOBAL_PREVIEW_ID,
   DEFAULT_CROP_CONFIG,
 } from "../constants/cropConfig";
+import { DEFAULT_EXPORT_SETTINGS } from "../constants/exportSettings";
 
 export const useImagesStore = defineStore("images", () => {
   const fileList = ref([]);
   const globalConfig = ref(createCropConfig());
+  const globalExportSettings = ref(createExportSettings());
   // 個別設定の一時的な保持に使用
   const individualCropConfig = ref(createCropConfig());
+  const individualExportSettings = ref(createExportSettings());
   // individualCropConfigの対象となるファイルを識別するために使用
   const activePreviewUrl = ref(null);
 
@@ -87,6 +90,19 @@ export const useImagesStore = defineStore("images", () => {
     return createCropConfig(targetConfig);
   });
 
+  // 渡された画像の書き出し設定を返す
+  const getExportSettings = computed(() => (previewUrl) => {
+    // 個別切り抜き設定中の時
+    if (previewUrl === activePreviewUrl.value) {
+      return { ...individualExportSettings.value };
+    }
+
+    // グローバル切り抜き設定中もしくは画像書き出し中の時
+    const file = fileList.value.find((f) => f.previewUrl === previewUrl);
+    const targetSettig = file?.exportSettings ?? globalExportSettings.value;
+    return createExportSettings(targetSettig);
+  });
+
   // グローバル設定のコピーを返す。(読み取り専用)
   const getGlobalConfig = computed(() => ({ ...globalConfig.value }));
 
@@ -147,6 +163,36 @@ export const useImagesStore = defineStore("images", () => {
       createCropConfig({
         ...file.cropConfig,
         ...config,
+      }),
+    );
+  };
+
+  const updateExportSettings = (previewUrl, newSettings) => {
+    if (isIndividualMode.value) {
+      setIndividualExportSettings(previewUrl, newSettings);
+    } else {
+      setGlobalExportSettings(newSettings);
+    }
+  };
+
+  const setGlobalExportSettings = (settings) => {
+    Object.assign(
+      globalExportSettings.value,
+      createExportSettings({
+        ...globalExportSettings.value,
+        ...settings,
+      }),
+    );
+  };
+
+  const setIndividualExportSettings = (previewUrl, settings) => {
+    if (previewUrl !== activePreviewUrl.value) return;
+
+    Object.assign(
+      individualExportSettings.value,
+      createExportSettings({
+        ...individualExportSettings.value,
+        ...settings,
       }),
     );
   };
@@ -217,6 +263,13 @@ export const useImagesStore = defineStore("images", () => {
     };
   }
 
+  function createExportSettings(base = {}) {
+    return {
+      ...DEFAULT_EXPORT_SETTINGS,
+      ...base,
+    };
+  }
+
   return {
     fileList,
     addFiles,
@@ -229,8 +282,10 @@ export const useImagesStore = defineStore("images", () => {
     updatePreviewConfig,
     getFileCropConfig,
     getGlobalConfig,
+    getExportSettings,
     setGlobalConfig,
     setFileConfig,
+    updateExportSettings,
     commitIndividualEdit,
     prepareIndividualEdit,
     clearActiveCropConfig,
