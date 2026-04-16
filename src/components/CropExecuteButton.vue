@@ -24,17 +24,17 @@ const handleProcessAll = async () => {
       // 切り抜き実行
       const cropConfig = imagesStore.getFileCropConfig(fileItem.previewUrl);
       const canvas = await performCropping(fileItem, cropConfig);
+      const exportSetting = imagesStore.getExportSettings(fileItem.previewUrl);
       results.push({
         name: fileItem.name,
         canvas: canvas,
+        exportType: exportSetting.exportType,
       });
     }
 
-    // ファイル形式（将来的にユーザー設定等から取得することを想定）
-    const exportType = "image/png";
     // Canvasの配列をZIP用のデータ配列に変換
     const zipFilePromises = results.map((item) =>
-      convertToZipItem(item, exportType),
+      convertToZipItem(item, item.exportType),
     );
     const zipFiles = await Promise.all(zipFilePromises);
 

@@ -11,6 +11,6 @@ export const CROP_MODES = {
   RATIO: "ratio",
 
   // 出力サイズ固定モード（指定したpxサイズでリサイズして書き出し）
-  // Photoshopの「幅 x 高さ x 解像度」に相当
+  // Photoshopの「幅 x 高さ x 解像度」に相当 (ただし解像度の指定は不可とする)
   FIXED_SIZE: "fixed_size",
 };
