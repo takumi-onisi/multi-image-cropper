@@ -34,13 +34,22 @@ const imagesStore = useImagesStore();
   display: grid;
   /* 3列構成: 左・ボタン・右 */
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
   gap: 10px;
 }
 
 .center-button {
   justify-self: center; /* ボタンを中央セルの中で中央へ */
+}
+
+.right-selector {
+  height: 100%;
+  display: flex;
+}
+
+.right-selector > * {
+  height: 100%;
 }
 
 /* 画面幅が狭いとき、またはセレクターが押し出されるとき */
