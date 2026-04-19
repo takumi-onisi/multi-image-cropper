@@ -146,7 +146,7 @@ const closeEditor = () => {
 /* プレビュー表示窓（正方形を維持） */
 .image-viewport {
   position: relative;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-inset);
   aspect-ratio: 1 / 1; /* 正方形 */
   display: flex;
   align-items: center;

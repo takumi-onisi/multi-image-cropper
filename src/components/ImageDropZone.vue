@@ -53,7 +53,7 @@ const handleDrop = (e) => {
 .drop-content {
   margin: auto;
   padding: 30px;
-  background: rgba(0, 0, 0, 0.03);
+  background-color: var(--color-bg-inset);
   border-radius: 8px;
 }
 
