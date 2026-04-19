@@ -23,10 +23,6 @@ const handleDrop = (e) => {
     store.addFiles(files);
   }
 };
-
-const clearFiles = () => {
-  store.clearFiles();
-};
 </script>
 
 <template>
@@ -42,13 +38,6 @@ const clearFiles = () => {
           <span>合計容量: {{ MAX_TOTAL_MB }}MB まで</span>
         </div>
         <p class="supported-formats">対応形式: {{ formatLabels }}</p>
-        <p
-          v-if="store.totalImageCount > 0"
-          class="clear-button"
-          @click="clearFiles"
-        >
-          画像をクリア
-        </p>
       </div>
     </div>
   </div>
@@ -96,13 +85,5 @@ const clearFiles = () => {
   margin-top: 4px;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
-}
-
-.clear-button {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  text-decoration: underline;
-  cursor: pointer;
-  color: #838383;
 }
 </style>
