@@ -1,0 +1,60 @@
+/* src/assets/css/main.css */
+
+/* 1. ブラウザごとの余白の差異をリセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 2. アプリ全体のデフォルト設定 */
+:root {
+  /* 変数（CSS Variables）を定義しておくと後で一括変更しやすいです */
+  --primary-color: #4a90e2; /* Multi Image Cropperのメイン色 */
+  --text-main: #1a1a1a; /* 基本の文字色 */
+  --text-sub: #64748b; /* 補足情報の文字色 */
+  --bg-app: #f8fafc; /* アプリ全体の背景色 */
+  --border-color: #e2e8f0; /* 境界線の色 */
+  --color-bg-inset: #f0f2f4; /*背景より一段階濃く、落ち着いた灰色 */
+}
+
+body {
+  /* font-family: "Inter", "Helvetica Neue"; */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-main);
+  background-color: var(--bg-app);
+  line-height: 1.6;
+}
+
+/* 3. リンクやボタンの共通設定 */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.container {
+  /* コンテンツの最大幅（これ以上広がらない） */
+  max-width: 1200px;
+
+  /* 左右中央寄せ */
+  margin-left: auto;
+  margin-right: auto;
+
+  /* 左右のパディング（ここを一箇所変えるだけで全画面が揃います） */
+  padding-left: 1.5rem; /* 約24px */
+  padding-right: 1.5rem;
+}
+
+/* モバイル対応：画面が狭いときはパディングを少し小さくする調整も一括で可能 */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

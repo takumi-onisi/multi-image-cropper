@@ -3,20 +3,22 @@ import { useImagesStore } from "./stores/imagesStore";
 import ImageDropZone from "./components/ImageDropZone.vue";
 import GlobalSettingView from "./components/GlobalSettingView.vue";
 import CropPreviewGrid from "./components/CropPreviewGrid.vue";
+import AppHeader from "./components/AppHeader.vue";
+import "./assets/css/main.css";
 const imagesStore = useImagesStore();
 </script>
 
 <template>
-  <h1>Image Crop Tool</h1>
-  <p>現在のファイル数 : {{ imagesStore.totalImageCount }}</p>
+  <AppHeader />
 
-  <div>
-    <h2>画像切り抜き</h2>
+  <div class="container">
     <ImageDropZone />
     <GlobalSettingView />
   </div>
 
-  <CropPreviewGrid />
+  <div class="container">
+    <CropPreviewGrid />
+  </div>
 </template>
 
 <style scoped></style>
