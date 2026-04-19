@@ -66,7 +66,7 @@ const closeEditor = () => {
 </script>
 
 <template>
-  <div class="preview-grid-container">
+  <div v-if="imagesStore.totalImageCount > 0" class="preview-grid-container">
     <h2 class="grid-title">
       切り抜きプレビュー（全 {{ imagesStore.totalImageCount }} 枚）
     </h2>
