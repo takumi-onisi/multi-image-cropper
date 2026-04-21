@@ -11,6 +11,8 @@ import {
   MAX_SINGLE_FILE_SIZE,
   MAX_TOTAL_FILE_SIZE,
 } from "../constants/config";
+import { TUTORIAL_IMAGES } from "../constants/tutorialImages";
+import { fetchFileFromUrl } from "../utils/imageProcessor";
 
 export const useImagesStore = defineStore("images", () => {
   const fileList = ref([]);
@@ -27,6 +29,30 @@ export const useImagesStore = defineStore("images", () => {
   // モード切り替え用のシンプルな関数
   const setIndividualMode = (value) => {
     isIndividualMode.value = value;
+  };
+
+  const doneTutorial = ref(false); // 初回はダミーモード
+
+  const initTutorial = async () => {
+    // すでに実施済みなら何もしない
+    if (doneTutorial.value) return;
+
+    try {
+      const tutorialEntries = await Promise.all(
+        TUTORIAL_IMAGES.map(async (img) => {
+          const file = await fetchFileFromUrl(img.url, img.name);
+          return createFileEntry(file);
+        }),
+      );
+      const globalMaster = createGlobalMaster(tutorialEntries[0]);
+      fileList.value = [globalMaster, ...tutorialEntries];
+    } catch (err) {
+      // 静かにエラーをログに残すだけにする
+      console.warn(
+        "チュートリアル画像の読み込みをスキップしました:",
+        err.message,
+      );
+    }
   };
 
   const addFiles = (files) => {
@@ -365,6 +391,8 @@ export const useImagesStore = defineStore("images", () => {
 
   return {
     fileList,
+    doneTutorial,
+    initTutorial,
     addFiles,
     clearFiles,
     displayFileList,

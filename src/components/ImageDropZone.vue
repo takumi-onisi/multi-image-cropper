@@ -18,10 +18,14 @@ const store = useImagesStore();
 
 const handleDrop = (e) => {
   const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    // ストアの関数のテスト
-    store.addFiles(files);
+  if (files.length === 0) return;
+
+  if (store.totalImageCount > 0 && !store.doneTutorial) {
+    // 初回ドロップ時チュートリアル用の画像をクリア
+    store.clearFiles();
+    store.doneTutorial = true;
   }
+  store.addFiles(files);
 };
 </script>
 

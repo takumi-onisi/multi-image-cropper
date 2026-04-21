@@ -6,6 +6,7 @@ import CropPreviewGrid from "./components/CropPreviewGrid.vue";
 import AppHeader from "./components/AppHeader.vue";
 import "./assets/css/main.css";
 const imagesStore = useImagesStore();
+imagesStore.initTutorial();
 </script>
 
 <template>
