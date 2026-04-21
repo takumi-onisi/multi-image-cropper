@@ -30,7 +30,7 @@ export const useImagesStore = defineStore("images", () => {
   };
 
   const addFiles = (files) => {
-    const fileArray = Array.from(files);
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
 
     // 1. 重複を排除 (既存リストとの比較 + 選択された中での重複排除)
     const existingKeys = new Set(
