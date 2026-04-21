@@ -236,7 +236,7 @@ watch(
   align-items: center;
   gap: 8px 16px; /* 横の隙間と、折り返した時の縦の隙間 */
   padding: 4px 12px;
-  background: #f4f4f4;
+  background: var(--color-bg-inset);
   border-bottom: 1px solid #ccc;
   min-height: 40px; /* 高さを一定に保つ */
   font-size: 13px;
