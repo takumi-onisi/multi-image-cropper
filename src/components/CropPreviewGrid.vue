@@ -66,7 +66,7 @@ const closeEditor = () => {
 </script>
 
 <template>
-  <div class="preview-grid-container">
+  <div v-if="imagesStore.totalImageCount > 0" class="preview-grid-container">
     <h2 class="grid-title">
       切り抜きプレビュー（全 {{ imagesStore.totalImageCount }} 枚）
     </h2>
@@ -146,7 +146,7 @@ const closeEditor = () => {
 /* プレビュー表示窓（正方形を維持） */
 .image-viewport {
   position: relative;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-inset);
   aspect-ratio: 1 / 1; /* 正方形 */
   display: flex;
   align-items: center;

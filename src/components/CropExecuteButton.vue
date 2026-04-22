@@ -8,8 +8,8 @@ const imagesStore = useImagesStore();
 const isProcessing = ref(false);
 const currentCount = ref(0);
 
-const hasFiles = computed(() => imagesStore.fileList.length > 0);
-const totalCount = computed(() => imagesStore.fileList.length);
+const hasFiles = computed(() => imagesStore.totalImageCount > 0);
+const totalCount = computed(() => imagesStore.totalImageCount);
 
 const handleProcessAll = async () => {
   if (isProcessing.value) return;
@@ -19,7 +19,7 @@ const handleProcessAll = async () => {
   const results = [];
 
   try {
-    for (const fileItem of imagesStore.fileList) {
+    for (const fileItem of imagesStore.displayFileList) {
       currentCount.value++;
       // 切り抜き実行
       const cropConfig = imagesStore.getFileCropConfig(fileItem.previewUrl);

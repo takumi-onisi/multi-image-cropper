@@ -6,6 +6,13 @@ import {
   DEFAULT_CROP_CONFIG,
 } from "../constants/cropConfig";
 import { DEFAULT_EXPORT_SETTINGS } from "../constants/exportSettings";
+import {
+  MAX_FILE_COUNT,
+  MAX_SINGLE_FILE_SIZE,
+  MAX_TOTAL_FILE_SIZE,
+} from "../constants/config";
+import { TUTORIAL_IMAGES } from "../constants/tutorialImages";
+import { fetchFileFromUrl } from "../utils/imageProcessor";
 
 export const useImagesStore = defineStore("images", () => {
   const fileList = ref([]);
@@ -24,36 +31,138 @@ export const useImagesStore = defineStore("images", () => {
     isIndividualMode.value = value;
   };
 
+  const doneTutorial = ref(false); // 初回はダミーモード
+
+  const initTutorial = async () => {
+    // すでに実施済みなら何もしない
+    if (doneTutorial.value) return;
+
+    try {
+      const tutorialEntries = await Promise.all(
+        TUTORIAL_IMAGES.map(async (img) => {
+          const file = await fetchFileFromUrl(img.url, img.name);
+          return createFileEntry(file);
+        }),
+      );
+      const globalMaster = createGlobalMaster(tutorialEntries[0]);
+      fileList.value = [globalMaster, ...tutorialEntries];
+    } catch (err) {
+      // 静かにエラーをログに残すだけにする
+      console.warn(
+        "チュートリアル画像の読み込みをスキップしました:",
+        err.message,
+      );
+    }
+  };
+
   const addFiles = (files) => {
-    // files は FileList という特殊な型なので、Array.fromで配列化が必要
-    const newEntries = Array.from(files).map((file) => {
-      return {
-        id: crypto.randomUUID(), // v-for用のkey
-        file: file, // 生のファイルデータ
-        name: file.name,
-        // ファイルにアクセスできるようにブラウザのメモリにファイルへのURLを発行する
-        // ブラウザのメモリリーク防止のためにメモリのクリアも作成すること
-        previewUrl: URL.createObjectURL(file),
-      };
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
+
+    // 1. 重複を排除 (既存リストとの比較 + 選択された中での重複排除)
+    const existingKeys = new Set(
+      fileList.value.map((item) => getFileKey(item.file)),
+    );
+    const uniqueFiles = fileArray.filter((file) => {
+      const key = getFileKey(file);
+      if (existingKeys.has(key)) return false;
+      existingKeys.add(key); // 今回の選択内での重複も防ぐ
+      return true;
     });
 
+    if (uniqueFiles.length === 0) return;
+
+    // 2. バリデーション実行
+    const { accepted, errors } = partitionFiles(
+      uniqueFiles,
+      displayFileList.value.length,
+      fileList.value.reduce((sum, item) => sum + item.file.size, 0),
+    );
+
+    // 3. エラーがあれば通知
+    if (errors.length > 0) {
+      alert(`一部のファイルを追加できませんでした:\n\n${errors.join("\n")}`);
+    }
+
+    if (accepted.length === 0) return;
+
+    // 3. データ形式への変換
+    const newEntries = accepted.map(createFileEntry);
+
+    // 4. リストへの追加とグローバルマスターの初期化
     if (fileList.value.length === 0) {
-      const first = newEntries[0];
-      // グローバル設定用のオブジェクト専用のオブジェクトを作成する
-      const globalPreview = {
-        ...first,
-        id: GLOBAL_PREVIEW_ID,
-        // 同じFileオブジェクトから別のURLを発行することで、
-        // 「同じ画像だが別個体」としてストアに認識させる
-        previewUrl: URL.createObjectURL(first.file),
-        isGlobalMaster: true,
-      };
-      fileList.value = [globalPreview, ...newEntries];
+      const globalMaster = createGlobalMaster(newEntries[0]);
+      fileList.value = [globalMaster, ...newEntries];
     } else {
-      // 既存のリストの後ろに追加
       fileList.value = [...fileList.value, ...newEntries];
     }
   };
+
+  /**
+   * 重複チェック用の簡易キー生成
+   */
+  const getFileKey = (file) => `${file.name}-${file.size}-${file.lastModified}`;
+
+  /**
+   * ファイル群をバリデーションし、合格したものとエラー内容を振り分ける
+   */
+  const partitionFiles = (files, initialCount, initialTotalSize) => {
+    const accepted = [];
+    const errors = [];
+    let currentCount = initialCount;
+    let currentTotalSize = initialTotalSize;
+
+    for (const file of files) {
+      // 1. 枚数チェック
+      if (currentCount >= MAX_FILE_COUNT) {
+        errors.push(
+          `${file.name}: 最大枚数(${MAX_FILE_COUNT}枚)を超えています。`,
+        );
+        continue;
+      }
+
+      // 2. 個別サイズチェック
+      if (file.size > MAX_SINGLE_FILE_SIZE) {
+        errors.push(`${file.name}: 1枚あたりの制限(10MB)を超えています。`);
+        continue;
+      }
+
+      // 3. 合計サイズチェック
+      if (currentTotalSize + file.size > MAX_TOTAL_FILE_SIZE) {
+        errors.push(`${file.name}: 合計容量制限を超えるため追加できません。`);
+        continue;
+      }
+
+      // すべて合格
+      accepted.push(file);
+      currentCount++;
+      currentTotalSize += file.size;
+    }
+
+    return { accepted, errors };
+  };
+
+  /**
+   * 単一のファイルエントリーオブジェクトを作成
+   */
+  const createFileEntry = (file) => ({
+    id: crypto.randomUUID(),
+    file: file,
+    name: file.name,
+    // ファイルにアクセスできるようにブラウザのメモリにファイルへのURLを発行する
+    previewUrl: URL.createObjectURL(file),
+  });
+
+  /**
+   * グローバルマスター用のエントリーを作成
+   */
+  const createGlobalMaster = (entry) => ({
+    ...entry,
+    id: GLOBAL_PREVIEW_ID,
+    // 同じFileオブジェクトから別のURLを発行することで、
+    // 「同じ画像だが別個体」としてストアに認識させる
+    previewUrl: URL.createObjectURL(entry.file),
+    isGlobalMaster: true,
+  });
 
   const clearFiles = () => {
     // メモリーリーク防止のために、生成したURLを解放してからクリア
@@ -282,6 +391,8 @@ export const useImagesStore = defineStore("images", () => {
 
   return {
     fileList,
+    doneTutorial,
+    initTutorial,
     addFiles,
     clearFiles,
     displayFileList,

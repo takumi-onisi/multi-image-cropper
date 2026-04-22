@@ -2,6 +2,32 @@ import { loadImage } from "./imageLoader";
 import { CROP_MODES } from "../constants/cropModes";
 import { EXPORT_TYPES, getExtensionByType } from "../constants/exportTypes";
 /**
+ * 静的な画像URLからFileオブジェクトを生成するユーティリティ
+ * チュートリアル画像やテンプレート画像の読み込みに使用します。
+ * * @param {string} url - 取得先画像のURL（importしたアセットパスなど）
+ * @param {string} fileName - 生成するFileオブジェクトに付与するファイル名
+ * @returns {Promise<File>} 生成されたFileオブジェクトを返すプロミス
+ * @throws {Error} ネットワークエラーやレスポンスの異常時にエラーを投げます
+ */
+export const fetchFileFromUrl = async (url, fileName) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `画像の取得に失敗しました: ${response.status} ${response.statusText}`,
+      );
+    }
+    const blob = await response.blob();
+
+    // Fileオブジェクトを作成して返す
+    // typeはblobから自動取得されるため、第二引数の名前と合わせて管理されます
+    return new File([blob], fileName, { type: blob.type });
+  } catch (error) {
+    console.error("fetchFileFromUrlでエラーが発生しました:", error);
+    throw error;
+  }
+};
+/**
  * fileと設定から切り抜き済みCanvasを生成する
  * @param {object} file - ストアに保存された画像情報
  * @param {object} cropConfig - 切り抜き設定 {mode, selection, targetSize}
