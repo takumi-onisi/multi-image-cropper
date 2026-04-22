@@ -27,6 +27,10 @@ const handleDrop = (e) => {
   }
   store.addFiles(files);
 };
+
+const clearFiles = () => {
+  store.clearFiles();
+};
 </script>
 
 <template>
@@ -42,6 +46,13 @@ const handleDrop = (e) => {
           <span>合計容量: {{ MAX_TOTAL_MB }}MB まで</span>
         </div>
         <p class="supported-formats">対応形式: {{ formatLabels }}</p>
+        <p
+          v-if="store.totalImageCount > 0"
+          class="clear-button"
+          @click="clearFiles"
+        >
+          現在の画像をクリア
+        </p>
       </div>
     </div>
   </div>
@@ -78,7 +89,7 @@ const handleDrop = (e) => {
   display: flex;
   justify-content: center;
   gap: 10px;
-  color: #9ca3af;
+  color: var(--text-sub);
 }
 
 .separator {
@@ -87,7 +98,12 @@ const handleDrop = (e) => {
 
 .supported-formats {
   margin-top: 4px;
-  font-size: 0.75rem;
   letter-spacing: 0.05em;
+}
+.clear-button {
+  margin-top: 1.5rem;
+  line-height: 1.6;
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>

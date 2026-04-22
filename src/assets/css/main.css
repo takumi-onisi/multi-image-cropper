@@ -12,7 +12,7 @@
   /* 変数（CSS Variables）を定義しておくと後で一括変更しやすいです */
   --primary-color: #4a90e2; /* Multi Image Cropperのメイン色 */
   --text-main: #1a1a1a; /* 基本の文字色 */
-  --text-sub: #64748b; /* 補足情報の文字色 */
+  --text-sub: #9ca3af; /* 補足情報の文字色 */
   --bg-app: #f8fafc; /* アプリ全体の背景色 */
   --border-color: #e2e8f0; /* 境界線の色 */
   --color-bg-inset: #f0f2f4; /*背景より一段階濃く、落ち着いた灰色 */
