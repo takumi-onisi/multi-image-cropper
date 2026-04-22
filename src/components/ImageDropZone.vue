@@ -39,13 +39,13 @@ const clearFiles = () => {
       <p class="main-text">ここに画像をドロップしてください</p>
 
       <div class="limit-info">
-        <p>最大 {{ MAX_FILE_COUNT }} 枚まで一括処理可能</p>
+        <p class="sub-text">最大 {{ MAX_FILE_COUNT }} 枚まで一括処理可能</p>
         <div class="sub-info">
           <span>1枚あたり: {{ MAX_SINGLE_MB }}MB まで</span>
           <span class="separator">|</span>
           <span>合計容量: {{ MAX_TOTAL_MB }}MB まで</span>
         </div>
-        <p class="supported-formats">対応形式: {{ formatLabels }}</p>
+        <p class="sub-text">対応形式: {{ formatLabels }}</p>
         <p
           v-if="store.totalImageCount > 0"
           class="clear-button"
@@ -96,10 +96,11 @@ const clearFiles = () => {
   color: #d1d5db;
 }
 
-.supported-formats {
+.sub-text {
   margin-top: 4px;
   letter-spacing: 0.05em;
 }
+
 .clear-button {
   margin-top: 1.5rem;
   line-height: 1.6;
