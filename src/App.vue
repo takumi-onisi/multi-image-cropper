@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted } from "vue";
 import { useImagesStore } from "./stores/imagesStore";
 import ImageDropZone from "./components/ImageDropZone.vue";
 import GlobalSettingView from "./components/GlobalSettingView.vue";
@@ -7,7 +8,9 @@ import AppHeader from "./components/AppHeader.vue";
 import AppFooter from "./components/AppFooter.vue";
 import "./assets/css/main.css";
 const imagesStore = useImagesStore();
-imagesStore.initTutorial();
+onMounted(() => {
+  imagesStore.initTutorial();
+});
 </script>
 
 <template>
