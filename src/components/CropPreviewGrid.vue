@@ -4,6 +4,27 @@ import { useImagesStore } from "../stores/imagesStore";
 import IndividualSettingDialog from "./IndividualSettingDialog.vue";
 
 const imagesStore = useImagesStore();
+const viewportSizes = ref({});
+const resizeObservers = new Map();
+
+/**
+ * 各プレビュー枠のサイズの変化を監視対象に追加
+ */
+const registerViewport = (el, previewUrl) => {
+  if (!el || resizeObservers.has(previewUrl)) return;
+
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      viewportSizes.value[previewUrl] = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+    }
+  });
+
+  observer.observe(el);
+  resizeObservers.set(previewUrl, observer);
+};
 
 /**
  * プレビュー枠（切り抜かれた後の形）のスタイルを計算
@@ -12,9 +33,13 @@ const getClipContainerStyle = (file) => {
   const config = imagesStore.getFileCropConfig(file.previewUrl);
   const { width, height } = config.selection;
 
-  // プレビュー枠の最大サイズ（カード内での上限）
-  const maxDisplaySize = 160;
-  const scale = Math.min(maxDisplaySize / width, maxDisplaySize / height, 1);
+  const viewport = viewportSizes.value[file.previewUrl];
+
+  if (!viewport) {
+    return {};
+  }
+
+  const scale = Math.min(viewport.width / width, viewport.height / height);
 
   return {
     width: `${width * scale}px`,
@@ -29,16 +54,18 @@ const getImageTransformStyle = (file) => {
   const config = imagesStore.getFileCropConfig(file.previewUrl);
   const { x, y, width, height } = config.selection;
 
-  // コンテナの縮尺に合わせるためのスケール計算
-  const maxDisplaySize = 160;
+  const viewport = viewportSizes.value[file.previewUrl];
+
+  if (!viewport) {
+    return {};
+  }
+
   const displayScale = Math.min(
-    maxDisplaySize / width,
-    maxDisplaySize / height,
-    1,
+    viewport.width / width,
+    viewport.height / height,
   );
 
   return {
-    // 切り抜き開始位置(x, y)をマイナス方向にずらす
     transform: `translate(${-x * displayScale}px, ${-y * displayScale}px) scale(${displayScale})`,
   };
 };
@@ -77,7 +104,10 @@ const closeEditor = () => {
         :key="file.previewUrl"
         class="preview-card"
       >
-        <div class="image-viewport">
+        <div
+          class="image-viewport"
+          :ref="(el) => registerViewport(el, file.previewUrl)"
+        >
           <div :style="getClipContainerStyle(file)" class="clip-boundary">
             <img
               :src="file.previewUrl"
@@ -152,6 +182,7 @@ const closeEditor = () => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 12px;
 }
 
 /* 青い枠線（切り抜き範囲） */
@@ -160,6 +191,7 @@ const closeEditor = () => {
   overflow: hidden;
   border: 1px solid #3182ce;
   background-color: #fff;
+  width: 100%;
 }
 
 /* 画像自体のリセット */
