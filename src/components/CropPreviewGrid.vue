@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onUnmounted } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import IndividualSettingDialog from "./IndividualSettingDialog.vue";
 
@@ -90,6 +90,13 @@ const closeEditor = () => {
   isDialogOpen.value = false;
   selectedFile.value = null;
 };
+
+onUnmounted(() => {
+  // すべての監視を停止
+  resizeObservers.forEach((observer) => observer.disconnect());
+  // Mapオブジェクト内の参照もクリアして、ガベージコレクションを促す
+  resizeObservers.clear();
+});
 </script>
 
 <template>
