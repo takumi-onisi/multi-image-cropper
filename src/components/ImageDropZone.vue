@@ -107,4 +107,18 @@ const clearFiles = () => {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* スマートフォン向けのレスポンシブ設定 */
+@media (max-width: 640px) {
+  .sub-info {
+    /* 横並びから縦並びに変更 */
+    flex-direction: column;
+    gap: 4px; /* 縦の間隔を調整 */
+  }
+
+  .sub-info .separator {
+    /* 縦積みの時は不要なので非表示にする */
+    display: none;
+  }
+}
 </style>
