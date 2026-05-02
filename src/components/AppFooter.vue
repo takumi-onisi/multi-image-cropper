@@ -22,7 +22,7 @@
   margin-top: auto;
   border-top: 1px solid var(--border-color);
   color: var(--text-sub);
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
 }
 
 .footer-content {
