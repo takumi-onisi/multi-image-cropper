@@ -109,7 +109,7 @@ const clearFiles = () => {
 }
 
 /* スマートフォン向けのレスポンシブ設定 */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .sub-info {
     /* 横並びから縦並びに変更 */
     flex-direction: column;

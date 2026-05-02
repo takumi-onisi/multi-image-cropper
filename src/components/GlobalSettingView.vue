@@ -53,7 +53,7 @@ const imagesStore = useImagesStore();
 }
 
 /* 画面幅が狭いとき、またはセレクターが押し出されるとき */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .button-grid {
     grid-template-columns: 1fr; /* 1列に変更 */
     gap: 10px;

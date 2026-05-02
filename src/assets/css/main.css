@@ -16,6 +16,7 @@
   --bg-app: #f8fafc; /* アプリ全体の背景色 */
   --border-color: #e2e8f0; /* 境界線の色 */
   --color-bg-inset: #f0f2f4; /*背景より一段階濃く、落ち着いた灰色 */
+  --breakpoint-mobile: 768px; /* 
 }
 
 body {
@@ -52,7 +53,7 @@ button {
 }
 
 /* モバイル対応：画面が狭いときはパディングを少し小さくする調整も一括で可能 */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;

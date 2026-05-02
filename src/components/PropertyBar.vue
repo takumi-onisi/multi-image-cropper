@@ -297,8 +297,8 @@ input:disabled {
   margin: 0 4px;
 }
 
-/* レスポンシブ設定：画面幅が狭い時 */
-@media (max-width: 850px) {
+/* スマートフォン向けのレスポンシブ設定 */
+@media (max-width: 768px) {
   .divider {
     display: none; /* 区切り線を消す */
   }
@@ -312,10 +312,7 @@ input:disabled {
     background: transparent;
     margin: 0;
   }
-}
 
-/* スマートフォン向けのレスポンシブ設定 */
-@media (max-width: 600px) {
   .input-group-container {
     gap: 8px; /* 隙間を少し詰める */
   }
