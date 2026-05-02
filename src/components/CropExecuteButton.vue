@@ -76,7 +76,7 @@ const handleProcessAll = async () => {
 
 <style scoped>
 .execute-button {
-  background-color: #4a90e2;
+  background-color: var(--primary-color);
   color: white;
   padding: 10px 20px;
   border: none;
@@ -88,6 +88,6 @@ const handleProcessAll = async () => {
 }
 .progress {
   margin-left: 10px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
 }
 </style>

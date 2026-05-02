@@ -16,7 +16,10 @@
   --bg-app: #f8fafc; /* アプリ全体の背景色 */
   --border-color: #e2e8f0; /* 境界線の色 */
   --color-bg-inset: #f0f2f4; /*背景より一段階濃く、落ち着いた灰色 */
-  --breakpoint-mobile: 768px; /* 
+  --font-size-sm: 0.75rem; /* 12px相当 */
+  --font-size-base: 0.875rem; /* 14px相当（今回のアプリの基準） */
+  --font-size-lg: 1.125rem; /* 18px相当 */
+  --breakpoint-mobile: 768px; /* モバイル表示用ブレークポイント */
 }
 
 body {
