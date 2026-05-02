@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import { useImagesStore } from "./stores/imagesStore";
+import AppHeroSection from "./components/AppHeroSection.vue";
 import ImageDropZone from "./components/ImageDropZone.vue";
 import GlobalSettingView from "./components/GlobalSettingView.vue";
 import CropPreviewGrid from "./components/CropPreviewGrid.vue";
@@ -18,6 +19,7 @@ onMounted(() => {
     <AppHeader />
 
     <main class="content">
+      <AppHeroSection />
       <div class="container">
         <ImageDropZone />
         <GlobalSettingView />

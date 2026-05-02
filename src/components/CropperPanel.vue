@@ -219,15 +219,22 @@ function getTransformationContext(cropper) {
   display: none;
 }
 
+/* デフォルト（PC/タブレットなどの横長画面想定） */
 :deep(cropper-canvas) {
   margin: auto;
+  /* 縦幅基準でサイズを決定（プレビューが見える余白を確保） */
   width: 70vh !important;
   height: 70vh !important;
+  max-width: 100%; /* 念のため横幅も突き抜けないようガード */
 }
-/* 
-.button-area {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-} */
+
+/* スマートフォン（画面幅が狭い時）の調整 */
+@media (max-width: 768px) {
+  :deep(cropper-canvas) {
+    /* 横幅を基準にする（左右に10%ずつのマージンを設ける例：計80vw） */
+    width: 85vw !important;
+    /* 横幅と同じ値を指定して正方形を維持 */
+    height: 85vw !important;
+  }
+}
 </style>

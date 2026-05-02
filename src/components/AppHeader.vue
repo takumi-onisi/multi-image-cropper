@@ -16,7 +16,6 @@
   padding: 1rem 1.25rem 1rem;
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 1.25rem;
 }
 
 .header-container {

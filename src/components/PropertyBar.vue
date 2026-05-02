@@ -175,7 +175,7 @@ watch(
         <label>高さ :</label>
         <input type="number" v-model.number="localConfig.ratio.height" />
       </div>
-      <div class="input-group">
+      <div class="input-group checkbox-group">
         <input type="checkbox" v-model="isRatioFixed" id="fix-ratio" />
         <label for="fix-ratio">縦横比を固定</label>
       </div>
@@ -248,6 +248,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px; /* グループ内の要素間隔 */
+  flex-wrap: wrap; /* 折り返しを許可する */
 }
 
 .input-group {
@@ -275,6 +276,12 @@ input:disabled {
   cursor: not-allowed;
 }
 
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* 単位(px)のラベル */
 .unit {
   font-size: 11px;
@@ -290,7 +297,7 @@ input:disabled {
   margin: 0 4px;
 }
 
-/* レスポンシブ設定：画面幅が狭い時（例：800px以下） */
+/* レスポンシブ設定：画面幅が狭い時 */
 @media (max-width: 850px) {
   .divider {
     display: none; /* 区切り線を消す */
@@ -304,6 +311,19 @@ input:disabled {
     height: 0;
     background: transparent;
     margin: 0;
+  }
+}
+
+/* スマートフォン向けのレスポンシブ設定 */
+@media (max-width: 600px) {
+  .input-group-container {
+    gap: 8px; /* 隙間を少し詰める */
+  }
+
+  /* チェックボックスのグループを強制的に次の行へ送る設定 */
+  .checkbox-group {
+    flex-basis: 100%; /* 横幅を100%確保することで、強制的に改行させる */
+    margin-top: 4px; /* 上の入力欄との間に少し隙間を作る */
   }
 }
 </style>
