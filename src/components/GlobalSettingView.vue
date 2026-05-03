@@ -12,6 +12,7 @@ const imagesStore = useImagesStore();
   <CropperPanel
     v-if="imagesStore.globalPreviewFile"
     :image="imagesStore.globalPreviewFile"
+    :key="imagesStore.globalPreviewFile?.previewUrl"
   />
 
   <div v-if="imagesStore.globalPreviewFile" class="button-area">

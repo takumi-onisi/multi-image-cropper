@@ -20,12 +20,6 @@ const fileInput = ref(null); // input要素への参照
 
 const addFilesToStore = (files) => {
   if (files.length === 0) return;
-
-  if (store.totalImageCount > 0 && !store.doneTutorial) {
-    // 初回ドロップ時チュートリアル用の画像をクリア
-    store.clearFiles();
-    store.doneTutorial = true;
-  }
   store.addFiles(files);
 };
 

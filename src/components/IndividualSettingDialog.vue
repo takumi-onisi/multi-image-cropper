@@ -42,7 +42,7 @@ const handleCancel = () => {
         </header>
 
         <main class="modal-body">
-          <CropperPanel :image="file" />
+          <CropperPanel :image="file" :key="file.previewUrl" />
         </main>
 
         <footer class="modal-footer">
