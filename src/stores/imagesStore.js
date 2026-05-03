@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { assertCropConfig } from "../utils/assertions";
 import {
   GLOBAL_PREVIEW_ID,
@@ -31,11 +31,11 @@ export const useImagesStore = defineStore("images", () => {
     isIndividualMode.value = value;
   };
 
-  const doneTutorial = ref(false); // 初回はダミーモード
+  const isTutorialMode = ref(true); // 初期状態はチュートリアルモード
 
   const initTutorial = async () => {
     // すでに実施済みなら何もしない
-    if (doneTutorial.value) return;
+    if (!isTutorialMode.value) return;
 
     try {
       const tutorialEntries = await Promise.all(
@@ -55,7 +55,7 @@ export const useImagesStore = defineStore("images", () => {
     }
   };
 
-  const addFiles = (files) => {
+  const addFiles = async (files) => {
     const fileArray = Array.isArray(files) ? files : Array.from(files);
 
     // 1. 重複を排除 (既存リストとの比較 + 選択された中での重複排除)
@@ -88,11 +88,20 @@ export const useImagesStore = defineStore("images", () => {
     // 3. データ形式への変換
     const newEntries = accepted.map(createFileEntry);
 
-    // 4. リストへの追加とグローバルマスターの初期化
+    if (isTutorialMode.value) {
+      // ※ ユーザーが初めて入れた時は、デモ画像をすべて消して「本番」に差し替えるため
+      clearFiles();
+
+      // await nextTick();
+      // チュートリアル完了を記録
+      isTutorialMode.value = false;
+    }
+    // もしリストが空（一度全部消した場合など）なら、1枚目をマスターにする
     if (fileList.value.length === 0) {
       const globalMaster = createGlobalMaster(newEntries[0]);
       fileList.value = [globalMaster, ...newEntries];
     } else {
+      // 既存リストは維持して追加
       fileList.value = [...fileList.value, ...newEntries];
     }
   };
@@ -391,7 +400,6 @@ export const useImagesStore = defineStore("images", () => {
 
   return {
     fileList,
-    doneTutorial,
     initTutorial,
     addFiles,
     clearFiles,
