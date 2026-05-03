@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import {
   MAX_FILE_COUNT,
@@ -15,9 +16,9 @@ const formatLabels = ALLOWED_IMAGE_MIME_TYPES.map((mime) => {
   return ext === "JPEG" ? "JPG" : ext; // JPEGはJPGと表示したほうが一般的
 }).join(" / ");
 const store = useImagesStore();
+const fileInput = ref(null); // input要素への参照
 
-const handleDrop = (e) => {
-  const files = e.dataTransfer.files;
+const addFilesToStore = (files) => {
   if (files.length === 0) return;
 
   if (store.totalImageCount > 0 && !store.doneTutorial) {
@@ -28,6 +29,18 @@ const handleDrop = (e) => {
   store.addFiles(files);
 };
 
+// ドラッグ&ドロップ用
+const handleDrop = (e) => {
+  addFilesToStore(e.dataTransfer.files);
+};
+
+// ファイル選択ボタン用
+const handleFileSelect = (e) => {
+  addFilesToStore(e.target.files);
+  // 同じファイルを連続で選択しても反応するようにリセット
+  e.target.value = "";
+};
+
 const clearFiles = () => {
   store.clearFiles();
 };
@@ -36,7 +49,26 @@ const clearFiles = () => {
 <template>
   <div class="drop-zone" @drop.prevent="handleDrop" @dragover.prevent>
     <div class="drop-content">
-      <p class="main-text">ここに画像をドロップしてください</p>
+      <!-- スマホとPCでテキストを切り替え -->
+      <p class="main-text pc-only">ここに画像をドロップしてください</p>
+      <p class="main-text mobile-only">切り抜く画像を選択してください</p>
+
+      <!-- 見た目用のデザインされたボタンを label で作成 -->
+      <label for="file-upload" class="custom-file-upload">
+        ファイルを選択
+      </label>
+      <!-- ファイル選択用 input -->
+      <div class="file-select-container">
+        <input
+          type="file"
+          ref="fileInput"
+          multiple
+          :accept="ALLOWED_IMAGE_MIME_TYPES.join(',')"
+          @change="handleFileSelect"
+          class="file-input"
+          style="display: none"
+        />
+      </div>
 
       <div class="limit-info">
         <p class="sub-text">最大 {{ MAX_FILE_COUNT }} 枚まで一括処理可能</p>
@@ -78,8 +110,29 @@ const clearFiles = () => {
   margin-bottom: 12px;
 }
 
+/* PC/スマホ出し分け用の基本設定 */
+.mobile-only {
+  display: none;
+}
+.pc-only {
+  display: block;
+}
+
+/* ファイル選択ボタンの見た目（中央寄せ） */
+.custom-file-upload {
+  display: inline-block;
+  padding: 8px 20px;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  margin: 15px 0;
+  transition: background-color 0.2s;
+}
+
 .limit-info {
-  font-size: 0.875rem;
+  font-size: var(--font-size-base);
   line-height: 1.6;
   padding: 10px 20px;
   border-radius: 6px;
@@ -110,6 +163,13 @@ const clearFiles = () => {
 
 /* スマートフォン向けのレスポンシブ設定 */
 @media (max-width: 768px) {
+  .pc-only {
+    display: none;
+  }
+  .mobile-only {
+    display: block;
+  }
+
   .sub-info {
     /* 横並びから縦並びに変更 */
     flex-direction: column;

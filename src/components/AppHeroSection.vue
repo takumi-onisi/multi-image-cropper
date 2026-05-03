@@ -59,7 +59,7 @@ import { MAX_FILE_COUNT } from "../constants/config";
 }
 
 .hero-left h1 {
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
   line-height: 1.3;
   color: var(--text-main);
   margin-bottom: 20px;
@@ -90,7 +90,7 @@ import { MAX_FILE_COUNT } from "../constants/config";
   margin-bottom: 16px;
   padding-left: 28px;
   position: relative;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #444;
   line-height: 1.5;
 }

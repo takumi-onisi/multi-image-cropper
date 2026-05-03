@@ -219,7 +219,7 @@ onUnmounted(() => {
 }
 
 .file-name {
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   color: #4a5568;
   white-space: nowrap;
   overflow: hidden;
@@ -232,7 +232,7 @@ onUnmounted(() => {
   width: 100%;
   padding: 0.4rem 0.75rem;
   margin-bottom: 0.2rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-base);
   background-color: #3182ce;
   color: #ffffff;
   border: none;
@@ -249,7 +249,7 @@ onUnmounted(() => {
 .reset-button {
   width: 100%;
   padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-base);
   background-color: #dfdfdf;
   color: #353535;
   border: none;

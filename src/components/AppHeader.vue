@@ -39,7 +39,7 @@
 }
 
 .sub-title {
-  font-size: 0.8rem;
+  font-size: var(font-size-base);
   margin: 2px 0 0 0;
 }
 </style>
