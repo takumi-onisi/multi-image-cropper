@@ -152,7 +152,29 @@ onUnmounted(() => {
 <style scoped>
 /* コンテナ全体のスタイル */
 .preview-grid-container {
+  margin: 1rem;
   padding: 1rem;
+  /* 親（right-panel）の高さがいっぱいになるようにする */
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* スクロールバーのデザイン */
+.preview-grid-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.preview-grid-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.preview-grid-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.preview-grid-container::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }
 
 .grid-title {
