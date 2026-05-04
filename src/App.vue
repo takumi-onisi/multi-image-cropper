@@ -42,6 +42,7 @@ onMounted(() => {
 
 <style scoped>
 .inner {
+  margin: 2rem 0;
   padding: 0 1.5rem;
 }
 
@@ -51,7 +52,7 @@ onMounted(() => {
   flex-wrap: nowrap;
   padding: 0 20px;
   max-width: 1600px; /* 必要に応じて最大幅を設定 */
-  margin: 0 auto;
+  margin: 2rem auto;
   /* 左側の GlobalSettingView の高さに右側を強制的に合わせる */
   align-items: stretch;
 }
