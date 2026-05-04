@@ -20,17 +20,19 @@ onMounted(() => {
 
     <main class="content">
       <AppHeroSection />
-      <ImageDropZone />
-      <div class="main-layout">
-        <section class="left-panel">
-          <GlobalSettingView />
-        </section>
+      <div class="inner">
+        <ImageDropZone />
+        <div class="main-layout">
+          <section class="left-panel">
+            <GlobalSettingView />
+          </section>
 
-        <div class="layout-separator"></div>
+          <div class="layout-separator"></div>
 
-        <section class="right-panel">
-          <CropPreviewGrid />
-        </section>
+          <section class="right-panel">
+            <CropPreviewGrid />
+          </section>
+        </div>
       </div>
     </main>
 
@@ -39,6 +41,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.inner {
+  padding: 0 1.5rem;
+}
+
 .main-layout {
   display: flex;
   flex-wrap: wrap; /* 幅が足りない時に縦積み（折り返し）を許可 */
