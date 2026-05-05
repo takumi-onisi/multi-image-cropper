@@ -353,7 +353,6 @@ function getTransformationContext(cropper) {
 
 // PropertyBar からのwithinModeの値を受け取る
 const handleUpdateWithin = (newMode) => {
-  console.log(newMode);
   withinMode.value = newMode;
 };
 </script>
