@@ -9,7 +9,7 @@ const props = defineProps({
   },
   within: {
     type: String,
-    default: "none",
+    default: "canvas",
   },
 });
 
@@ -216,7 +216,7 @@ watch(
           :value="within"
           @change="handleWithinChange"
         >
-          <option value="none">自由（制限なし）</option>
+          <option value="canvas">自由（制限なし）</option>
           <option value="image">画像内側</option>
         </select>
       </div>
