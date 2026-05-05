@@ -48,7 +48,6 @@ onMounted(() => {
 
 .main-layout {
   display: flex;
-  flex-wrap: wrap; /* 幅が足りない時に縦積み（折り返し）を許可 */
   flex-wrap: nowrap;
   padding: 0 20px;
   max-width: 1600px; /* 必要に応じて最大幅を設定 */
@@ -90,7 +89,6 @@ onMounted(() => {
 
   .main-layout {
     flex-direction: column; /* 縦積みに変更 */
-    flex-wrap: wrap;
   }
   .layout-separator {
     width: 100%; /* 横幅一杯に広げる */
