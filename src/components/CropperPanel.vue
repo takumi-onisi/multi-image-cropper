@@ -16,6 +16,8 @@ const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 // cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
 let isInternalSync = false;
+// 制限モードを管理するステート
+const withinMode = ref("image");
 const props = defineProps({
   // 切り抜き対象の画像
   image: {
@@ -53,8 +55,168 @@ const initCropper = () => {
       isInternalSync = false;
     });
   };
-  cropper.getCropperSelection().addEventListener("change", syncToStore);
-  cropper.getCropperImage().addEventListener("transform", syncToStore);
+  const cropperSelection = cropper.getCropperSelection();
+  const cropperImage = cropper.getCropperImage();
+  cropperSelection.addEventListener("change", onCropperSelectionChange);
+  cropperImage.addEventListener("transform", onCropperImageTransform);
+  cropperSelection.addEventListener("change", syncToStore);
+  cropperImage.addEventListener("transform", syncToStore);
+};
+
+/**
+ * 矩形が最大範囲内に収まっているかチェックするヘルパー
+ */
+const inSelection = (selection, maxSelection) => {
+  return (
+    selection.x >= maxSelection.x &&
+    selection.y >= maxSelection.y &&
+    selection.x + selection.width <= maxSelection.x + maxSelection.width &&
+    selection.y + selection.height <= maxSelection.y + maxSelection.height
+  );
+};
+
+/**
+ * セレクション（枠）が動いた時のバリデーション
+ * withinModeに応じて切り抜き位置の許容エリアをコントロールする
+ */
+const onCropperSelectionChange = (event) => {
+  if (withinMode.value === "none" || !cropper) return;
+
+  const selection = event.detail; // 動こうとしている先の座標
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  let maxSelection = { x: 0, y: 0, width: 0, height: 0 };
+
+  if (withinMode.value === "canvas") {
+    maxSelection = {
+      x: 0,
+      y: 0,
+      width: cropperCanvasRect.width,
+      height: cropperCanvasRect.height,
+    };
+  } else if (withinMode.value === "image") {
+    const imageRect = cropper.container
+      .querySelector("cropper-image")
+      .getBoundingClientRect();
+    maxSelection = {
+      x: imageRect.left - cropperCanvasRect.left,
+      y: imageRect.top - cropperCanvasRect.top,
+      width: imageRect.width,
+      height: imageRect.height,
+    };
+  }
+
+  if (!inSelection(selection, maxSelection)) {
+    event.preventDefault(); // 範囲外なら移動・変形をキャンセル
+  }
+};
+
+/**
+ * 画像（背景）が動いた時のバリデーション
+ * withinModeに応じて切り抜き位置の許容エリアをコントロールする
+ */
+const onCropperImageTransform = (event) => {
+  // 画像内制限モードの時だけ、画像が小さくなりすぎて枠がはみ出すのを防ぐ
+  if (withinMode.value !== "image" || !cropper) return;
+
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperImage = cropper.container.querySelector("cropper-image");
+  const cropperSelection = cropper.getCropperSelection();
+
+  // 未来の座標を計算するために一時的にクローンを作る（リファレンスの手法）
+  const clone = cropperImage.cloneNode();
+  // Apply the new matrix to the cropper image clone.
+  clone.style.transform = `matrix(${event.detail.matrix.join(", ")})`;
+  clone.style.opacity = "0";
+  cropperCanvas.appendChild(clone);
+  const rect = clone.getBoundingClientRect();
+  cropperCanvas.removeChild(clone);
+
+  const canvasRect = cropperCanvas.getBoundingClientRect();
+  const maxSelection = {
+    x: rect.left - canvasRect.left,
+    y: rect.top - canvasRect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+
+  if (!inSelection(cropperSelection, maxSelection)) {
+    event.preventDefault(); // 枠がはみ出すような画像の縮小・移動をキャンセル
+  }
+};
+
+/**
+ * 現在の枠を制限範囲内に強制的に収める関数
+ */
+const adjustSelectionToLimit = () => {
+  if (!cropper || withinMode.value === "none") return;
+
+  const selection = cropper.getCropperSelection();
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  let maxSelection = { x: 0, y: 0, width: 0, height: 0 };
+
+  if (withinMode.value === "canvas") {
+    maxSelection = {
+      x: 0,
+      y: 0,
+      width: cropperCanvasRect.width,
+      height: cropperCanvasRect.height,
+    };
+  } else if (withinMode.value === "image") {
+    const imageRect = cropper.container
+      .querySelector("cropper-image")
+      .getBoundingClientRect();
+    maxSelection = {
+      x: imageRect.left - cropperCanvasRect.left,
+      y: imageRect.top - cropperCanvasRect.top,
+      width: imageRect.width,
+      height: imageRect.height,
+    };
+  }
+
+  // 現在の枠が制限範囲より大きい場合は、まずサイズを制限範囲に合わせる
+  const newWidth = Math.min(selection.width, maxSelection.width);
+  const newHeight = Math.min(selection.height, maxSelection.height);
+
+  // 範囲内に収まるように座標を計算（はみ出していたら押し戻す）
+  let newX = Math.max(
+    maxSelection.x,
+    Math.min(selection.x, maxSelection.x + maxSelection.width - newWidth),
+  );
+  let newY = Math.max(
+    maxSelection.y,
+    Math.min(selection.y, maxSelection.y + maxSelection.height - newHeight),
+  );
+
+  // 実際に補正が必要な場合のみ適用
+  if (
+    newX !== selection.x ||
+    newY !== selection.y ||
+    newWidth !== selection.width ||
+    newHeight !== selection.height
+  ) {
+    isInternalSync = true; // ストア同期のループ防止
+    Object.assign(selection, {
+      x: newX,
+      y: newY,
+      width: newWidth,
+      height: newHeight,
+    });
+
+    // ストアにも補正後の値を反映させるために手動で同期関数を呼ぶ
+    nextTick(() => {
+      // 既存の syncToStore ロジックを実行
+      const context = getTransformationContext(cropper);
+      const sourceSelection = convertViewToSource(selection, context);
+      imagesStore.updatePreviewConfig(props.image.previewUrl, {
+        selection: sourceSelection,
+      });
+      isInternalSync = false;
+    });
+  }
 };
 
 /**
@@ -114,6 +276,11 @@ watch(
   },
   { immediate: true },
 );
+
+// 切り抜き範囲が切り替わったらセレクションの枠を補正する
+watch(withinMode, () => {
+  adjustSelectionToLimit();
+});
 
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
@@ -183,6 +350,11 @@ function getTransformationContext(cropper) {
     },
   };
 }
+
+// PropertyBar からのwithinModeの値を受け取る
+const handleUpdateWithin = (newMode) => {
+  withinMode.value = newMode;
+};
 </script>
 
 <template>
@@ -190,7 +362,9 @@ function getTransformationContext(cropper) {
     <div class="cropper-wrapper">
       <PropertyBar
         :config="displayConfig"
+        :within="withinMode"
         @update:config="handleUpdateConfig"
+        @update:within="handleUpdateWithin"
       />
       <img
         ref="imageElement"

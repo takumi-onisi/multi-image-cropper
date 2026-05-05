@@ -7,9 +7,13 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  within: {
+    type: String,
+    default: "canvas",
+  },
 });
 
-const emit = defineEmits(["update:config"]);
+const emit = defineEmits(["update:config", "update:within"]);
 
 // 親からの値を受けて、ローカルで扱うためのリアクティブデータ
 const localConfig = ref(structuredClone(props.config));
@@ -50,6 +54,13 @@ const emitUpdate = () => {
     isChangingByUI = false; // ロックを解除
     isUpdatePending = false; // 予約解除
   });
+};
+
+/**
+ * モードが変更された時に親へ通知する
+ */
+const handleWithinChange = (event) => {
+  emit("update:within", event.target.value);
 };
 
 // 座標やサイズなど、直接的な値の変更を監視
@@ -159,72 +170,87 @@ watch(
 
 <template>
   <div class="property-bar">
-    <div class="input-group">
-      <select v-model="displayMode">
-        <option value="RATIO_GROUP">比率</option>
-        <option :value="CROP_MODES.FIXED_SIZE">幅 × 高さ</option>
-      </select>
-    </div>
+    <div class="property-group mode-group">
+      <div class="input-group">
+        <select v-model="displayMode" class="display-mode-select">
+          <option value="RATIO_GROUP">比率</option>
+          <option :value="CROP_MODES.FIXED_SIZE">幅×高さ</option>
+        </select>
+      </div>
 
-    <div v-if="displayMode === 'RATIO_GROUP'" class="input-group-container">
+      <div v-if="displayMode === 'RATIO_GROUP'" class="input-group-container">
+        <div class="input-group">
+          <label>幅 :</label>
+          <input type="number" v-model.number="localConfig.ratio.width" />
+        </div>
+        <div class="input-group">
+          <label>高さ :</label>
+          <input type="number" v-model.number="localConfig.ratio.height" />
+        </div>
+        <div class="input-group checkbox-group">
+          <input type="checkbox" v-model="isRatioFixed" id="fix-ratio" />
+          <label for="fix-ratio">縦横比を固定</label>
+        </div>
+      </div>
+
+      <div
+        v-else-if="displayMode === CROP_MODES.FIXED_SIZE"
+        class="input-group-container"
+      >
+        <div class="input-group">
+          <label>幅 :</label>
+          <input type="number" v-model.number="localConfig.targetSize.width" />
+        </div>
+        <div class="input-group">
+          <label>高さ :</label>
+          <input type="number" v-model.number="localConfig.targetSize.height" />
+        </div>
+      </div>
+    </div>
+    <div class="property-group limit-group">
+      <div class="input-group limit-group">
+        <label for="within-select">切り抜き範囲 :</label>
+        <select
+          id="within-select"
+          class="within-select"
+          :value="within"
+          @change="handleWithinChange"
+        >
+          <option value="canvas">自由（制限なし）</option>
+          <option value="image">画像内側</option>
+        </select>
+      </div>
+    </div>
+    <div class="property-group coord-group">
+      <div class="input-group">
+        <label>X :</label>
+        <input type="number" v-model.number="inputX" />
+        <span class="unit">px</span>
+      </div>
+      <div class="input-group">
+        <label>Y :</label>
+        <input type="number" v-model.number="inputY" />
+        <span class="unit">px</span>
+      </div>
+
       <div class="input-group">
         <label>幅 :</label>
-        <input type="number" v-model.number="localConfig.ratio.width" />
+        <input
+          type="number"
+          v-model.number="displaySelection.width"
+          :disabled="displayMode === CROP_MODES.FIXED_SIZE"
+        />
+        <span class="unit">px</span>
       </div>
       <div class="input-group">
         <label>高さ :</label>
-        <input type="number" v-model.number="localConfig.ratio.height" />
+        <input
+          type="number"
+          v-model.number="displaySelection.height"
+          :disabled="displayMode === CROP_MODES.FIXED_SIZE"
+        />
+        <span class="unit">px</span>
       </div>
-      <div class="input-group checkbox-group">
-        <input type="checkbox" v-model="isRatioFixed" id="fix-ratio" />
-        <label for="fix-ratio">縦横比を固定</label>
-      </div>
-    </div>
-
-    <div
-      v-else-if="displayMode === CROP_MODES.FIXED_SIZE"
-      class="input-group-container"
-    >
-      <div class="input-group">
-        <label>幅 :</label>
-        <input type="number" v-model.number="localConfig.targetSize.width" />
-      </div>
-      <div class="input-group">
-        <label>高さ :</label>
-        <input type="number" v-model.number="localConfig.targetSize.height" />
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="input-group">
-      <label>X :</label>
-      <input type="number" v-model.number="inputX" />
-      <span class="unit">px</span>
-    </div>
-    <div class="input-group">
-      <label>Y :</label>
-      <input type="number" v-model.number="inputY" />
-      <span class="unit">px</span>
-    </div>
-
-    <div class="input-group">
-      <label>幅 :</label>
-      <input
-        type="number"
-        v-model.number="displaySelection.width"
-        :disabled="displayMode === CROP_MODES.FIXED_SIZE"
-      />
-      <span class="unit">px</span>
-    </div>
-    <div class="input-group">
-      <label>高さ :</label>
-      <input
-        type="number"
-        v-model.number="displaySelection.height"
-        :disabled="displayMode === CROP_MODES.FIXED_SIZE"
-      />
-      <span class="unit">px</span>
     </div>
   </div>
 </template>
@@ -234,6 +260,7 @@ watch(
   display: flex;
   flex-wrap: wrap; /* 折り返しを許可 */
   align-items: center;
+  justify-content: flex-start;
   gap: 8px 16px; /* 横の隙間と、折り返した時の縦の隙間 */
   padding: 4px 12px;
   background: var(--color-bg-inset);
@@ -243,12 +270,19 @@ watch(
   color: #333;
 }
 
+.property-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap; /* グループ内では絶対に改行させない */
+  gap: 12px;
+}
+
 .ratio_group,
 .input-group-container {
   display: flex;
   align-items: center;
   gap: 12px; /* グループ内の要素間隔 */
-  flex-wrap: wrap; /* 折り返しを許可する */
+  flex-wrap: nowrap;
 }
 
 .input-group {
@@ -259,7 +293,8 @@ watch(
 }
 
 /* 入力欄のサイズを制限 */
-.input-group input[type="number"] {
+.input-group input[type="number"],
+.input-group select {
   width: 70px; /* 7桁程度が入る幅 */
   height: 24px; /* 高さを固定 */
   padding: 2px 4px;
@@ -267,6 +302,14 @@ watch(
   border-radius: 2px;
   background: #fff;
   font-family: monospace; /* 数字を見やすく */
+}
+
+.display-mode-select {
+  min-width: 100px;
+}
+
+.within-select {
+  min-width: 140px;
 }
 
 input:disabled {
@@ -280,6 +323,17 @@ input:disabled {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* 左側グループ：アスペクト比や範囲制限 */
+.left-group {
+  flex: 0 1 auto;
+}
+
+/* 右側グループ：X, Y, W, H */
+.right-group {
+  flex: 0 1 auto;
+  justify-content: flex-end; /* 右寄せ（横並び時） */
 }
 
 /* 単位(px)のラベル */
