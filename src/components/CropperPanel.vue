@@ -16,6 +16,8 @@ const imageElement = useTemplateRef("imageElement");
 let cropper = null;
 // cropperインスタンスのselectionとプロパティバーのループ防止用フラグ
 let isInternalSync = false;
+// 制限モードを管理するステート
+const withinMode = ref("image");
 const props = defineProps({
   // 切り抜き対象の画像
   image: {
@@ -53,8 +55,95 @@ const initCropper = () => {
       isInternalSync = false;
     });
   };
-  cropper.getCropperSelection().addEventListener("change", syncToStore);
-  cropper.getCropperImage().addEventListener("transform", syncToStore);
+  const cropperSelection = cropper.getCropperSelection();
+  const cropperImage = cropper.getCropperImage();
+  cropperSelection.addEventListener("change", onCropperSelectionChange);
+  cropperImage.addEventListener("transform", onCropperImageTransform);
+  cropperSelection.addEventListener("change", syncToStore);
+  cropperImage.addEventListener("transform", syncToStore);
+};
+
+/**
+ * 矩形が最大範囲内に収まっているかチェックするヘルパー
+ */
+const inSelection = (selection, maxSelection) => {
+  return (
+    selection.x >= maxSelection.x &&
+    selection.y >= maxSelection.y &&
+    selection.x + selection.width <= maxSelection.x + maxSelection.width &&
+    selection.y + selection.height <= maxSelection.y + maxSelection.height
+  );
+};
+
+/**
+ * セレクション（枠）が動いた時のバリデーション
+ * withinModeに応じて切り抜き位置の許容エリアをコントロールする
+ */
+const onCropperSelectionChange = (event) => {
+  if (withinMode.value === "none" || !cropper) return;
+
+  const selection = event.detail; // 動こうとしている先の座標
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  let maxSelection = { x: 0, y: 0, width: 0, height: 0 };
+
+  if (withinMode.value === "canvas") {
+    maxSelection = {
+      x: 0,
+      y: 0,
+      width: cropperCanvasRect.width,
+      height: cropperCanvasRect.height,
+    };
+  } else if (withinMode.value === "image") {
+    const imageRect = cropper.container
+      .querySelector("cropper-image")
+      .getBoundingClientRect();
+    maxSelection = {
+      x: imageRect.left - cropperCanvasRect.left,
+      y: imageRect.top - cropperCanvasRect.top,
+      width: imageRect.width,
+      height: imageRect.height,
+    };
+  }
+
+  if (!inSelection(selection, maxSelection)) {
+    event.preventDefault(); // 範囲外なら移動・変形をキャンセル
+  }
+};
+
+/**
+ * 画像（背景）が動いた時のバリデーション
+ * withinModeに応じて切り抜き位置の許容エリアをコントロールする
+ */
+const onCropperImageTransform = (event) => {
+  // 画像内制限モードの時だけ、画像が小さくなりすぎて枠がはみ出すのを防ぐ
+  if (withinMode.value !== "image" || !cropper) return;
+
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperImage = cropper.container.querySelector("cropper-image");
+  const cropperSelection = cropper.getCropperSelection();
+
+  // 未来の座標を計算するために一時的にクローンを作る（リファレンスの手法）
+  const clone = cropperImage.cloneNode();
+  // Apply the new matrix to the cropper image clone.
+  clone.style.transform = `matrix(${event.detail.matrix.join(", ")})`;
+  clone.style.opacity = "0";
+  cropperCanvas.appendChild(clone);
+  const rect = clone.getBoundingClientRect();
+  cropperCanvas.removeChild(clone);
+
+  const canvasRect = cropperCanvas.getBoundingClientRect();
+  const maxSelection = {
+    x: rect.left - canvasRect.left,
+    y: rect.top - canvasRect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+
+  if (!inSelection(cropperSelection, maxSelection)) {
+    event.preventDefault(); // 枠がはみ出すような画像の縮小・移動をキャンセル
+  }
 };
 
 /**
@@ -183,6 +272,12 @@ function getTransformationContext(cropper) {
     },
   };
 }
+
+// PropertyBar からのwithinModeの値を受け取る
+const handleUpdateWithin = (newMode) => {
+  console.log(newMode);
+  withinMode.value = newMode;
+};
 </script>
 
 <template>
@@ -190,7 +285,9 @@ function getTransformationContext(cropper) {
     <div class="cropper-wrapper">
       <PropertyBar
         :config="displayConfig"
+        :within="withinMode"
         @update:config="handleUpdateConfig"
+        @update:within="handleUpdateWithin"
       />
       <img
         ref="imageElement"

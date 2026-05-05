@@ -7,9 +7,13 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  within: {
+    type: String,
+    default: "none",
+  },
 });
 
-const emit = defineEmits(["update:config"]);
+const emit = defineEmits(["update:config", "update:within"]);
 
 // 親からの値を受けて、ローカルで扱うためのリアクティブデータ
 const localConfig = ref(structuredClone(props.config));
@@ -50,6 +54,13 @@ const emitUpdate = () => {
     isChangingByUI = false; // ロックを解除
     isUpdatePending = false; // 予約解除
   });
+};
+
+/**
+ * モードが変更された時に親へ通知する
+ */
+const handleWithinChange = (event) => {
+  emit("update:within", event.target.value);
 };
 
 // 座標やサイズなど、直接的な値の変更を監視
@@ -195,6 +206,19 @@ watch(
       </div>
     </div>
 
+    <div class="input-group">
+      <label for="within-select">切り抜き範囲 :</label>
+      <select
+        id="within-select"
+        class="within-select"
+        :value="within"
+        @change="handleWithinChange"
+      >
+        <option value="none">自由（制限なし）</option>
+        <option value="image">画像内側</option>
+      </select>
+    </div>
+
     <div class="divider"></div>
 
     <div class="input-group">
@@ -259,7 +283,8 @@ watch(
 }
 
 /* 入力欄のサイズを制限 */
-.input-group input[type="number"] {
+.input-group input[type="number"],
+.input-group select {
   width: 70px; /* 7桁程度が入る幅 */
   height: 24px; /* 高さを固定 */
   padding: 2px 4px;
@@ -267,6 +292,10 @@ watch(
   border-radius: 2px;
   background: #fff;
   font-family: monospace; /* 数字を見やすく */
+}
+
+.within-select {
+  min-width: 140px;
 }
 
 input:disabled {
