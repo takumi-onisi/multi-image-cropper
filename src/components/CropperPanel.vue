@@ -147,6 +147,79 @@ const onCropperImageTransform = (event) => {
 };
 
 /**
+ * 現在の枠を制限範囲内に強制的に収める関数
+ */
+const adjustSelectionToLimit = () => {
+  if (!cropper || withinMode.value === "none") return;
+
+  const selection = cropper.getCropperSelection();
+  const cropperCanvas = cropper.container.querySelector("cropper-canvas");
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  let maxSelection = { x: 0, y: 0, width: 0, height: 0 };
+
+  if (withinMode.value === "canvas") {
+    maxSelection = {
+      x: 0,
+      y: 0,
+      width: cropperCanvasRect.width,
+      height: cropperCanvasRect.height,
+    };
+  } else if (withinMode.value === "image") {
+    const imageRect = cropper.container
+      .querySelector("cropper-image")
+      .getBoundingClientRect();
+    maxSelection = {
+      x: imageRect.left - cropperCanvasRect.left,
+      y: imageRect.top - cropperCanvasRect.top,
+      width: imageRect.width,
+      height: imageRect.height,
+    };
+  }
+
+  // 現在の枠が制限範囲より大きい場合は、まずサイズを制限範囲に合わせる
+  const newWidth = Math.min(selection.width, maxSelection.width);
+  const newHeight = Math.min(selection.height, maxSelection.height);
+
+  // 範囲内に収まるように座標を計算（はみ出していたら押し戻す）
+  let newX = Math.max(
+    maxSelection.x,
+    Math.min(selection.x, maxSelection.x + maxSelection.width - newWidth),
+  );
+  let newY = Math.max(
+    maxSelection.y,
+    Math.min(selection.y, maxSelection.y + maxSelection.height - newHeight),
+  );
+
+  // 実際に補正が必要な場合のみ適用
+  if (
+    newX !== selection.x ||
+    newY !== selection.y ||
+    newWidth !== selection.width ||
+    newHeight !== selection.height
+  ) {
+    isInternalSync = true; // ストア同期のループ防止
+    Object.assign(selection, {
+      x: newX,
+      y: newY,
+      width: newWidth,
+      height: newHeight,
+    });
+
+    // ストアにも補正後の値を反映させるために手動で同期関数を呼ぶ
+    nextTick(() => {
+      // 既存の syncToStore ロジックを実行
+      const context = getTransformationContext(cropper);
+      const sourceSelection = convertViewToSource(selection, context);
+      imagesStore.updatePreviewConfig(props.image.previewUrl, {
+        selection: sourceSelection,
+      });
+      isInternalSync = false;
+    });
+  }
+};
+
+/**
  * ストアのconfigをCropperに反映させる共通ロジック
  * @param {Object} cropperInstance - 適用先のCropperインスタンス
  * @param {Object} config - 反映したい設定値
@@ -203,6 +276,11 @@ watch(
   },
   { immediate: true },
 );
+
+// 切り抜き範囲が切り替わったらセレクションの枠を補正する
+watch(withinMode, () => {
+  adjustSelectionToLimit();
+});
 
 // ストア(View基準) -> プロパティバー(Source基準)
 const displayConfig = computed(() => {
