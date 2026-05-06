@@ -23,8 +23,8 @@ const handleProcessAll = async () => {
       currentCount.value++;
       // 切り抜き実行
       const cropConfig = imagesStore.getFileCropConfig(fileItem.previewUrl);
-      const canvas = await performCropping(fileItem, cropConfig);
       const exportSetting = imagesStore.getExportSettings(fileItem.previewUrl);
+      const canvas = await performCropping(fileItem, cropConfig, exportSetting);
       results.push({
         name: fileItem.name,
         canvas: canvas,

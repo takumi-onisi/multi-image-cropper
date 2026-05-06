@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useImagesStore } from "../stores/imagesStore";
 import CropperPanel from "../components/CropperPanel.vue";
 import ExportTypeSelector from "./ExportTypeSelector.vue";
+import ExportBgColorPicker from "./ExportBgColorPicker.vue";
+import { EXPORT_TYPES } from "../constants/exportTypes";
 
 const props = defineProps({
   file: { type: Object, required: true },
@@ -47,6 +49,13 @@ const handleCancel = () => {
 
         <footer class="modal-footer">
           <ExportTypeSelector :file="file" />
+          <ExportBgColorPicker
+            v-if="
+              imagesStore.getExportSettings(file.previewUrl).exportType ===
+              EXPORT_TYPES.JPEG
+            "
+            :preview-url="file.previewUrl"
+          />
           <button class="btn-primary" @click="handleCommit">完了</button>
         </footer>
       </div>

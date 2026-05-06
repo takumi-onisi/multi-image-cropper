@@ -27,13 +27,15 @@ export const fetchFileFromUrl = async (url, fileName) => {
     throw error;
   }
 };
+
 /**
  * fileと設定から切り抜き済みCanvasを生成する
  * @param {object} file - ストアに保存された画像情報
  * @param {object} cropConfig - 切り抜き設定 {mode, selection, targetSize}
+ * @param {object} exportSettings - 書き出し設定 {exportType, backgroundColor}
  * @returns {Promise<HTMLCanvasElement>} 切り抜かれたCanvas要素
  */
-export async function performCropping(file, cropConfig) {
+export async function performCropping(file, cropConfig, exportSettings = {}) {
   const img = await loadImage(file.previewUrl); // 画像をロード
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -50,6 +52,16 @@ export async function performCropping(file, cropConfig) {
     // 比率/自由モード：セレクションの大きさをそのまま使う
     canvas.width = cropConfig.selection.width;
     canvas.height = cropConfig.selection.height;
+  }
+
+  // --- 背景色の塗りつぶし ---
+  // JPGの場合のみ背景を塗る
+  const isJPG = exportSettings.exportType === EXPORT_TYPES.JPEG;
+  if (isJPG) {
+    // 描画前にCanvas全体を指定色で塗る。色が指定されていない場合はスキップまたは白
+    const bgColor = exportSettings.backgroundColor || "#ffffff";
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   // 描画
