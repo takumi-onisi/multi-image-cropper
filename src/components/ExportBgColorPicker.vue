@@ -1,43 +1,30 @@
 <script setup>
-import { computed } from "vue";
-import { useImagesStore } from "../stores/imagesStore"; // パスは環境に合わせて調整してください
-
 const props = defineProps({
-  previewUrl: {
+  // 現在設定されている色（親から受け取る）
+  modelValue: {
     type: String,
-    required: true,
+    default: "#ffffff",
   },
 });
 
-const store = useImagesStore();
+const emit = defineEmits(["update:modelValue"]);
 
-// ストアから現在の設定（個別 or グローバル）を取得
-const exportSettings = computed(() =>
-  store.getExportSettings(props.previewUrl),
-);
-
-// 背景色が変更された時のハンドラ
-const handleColorChange = (event) => {
-  store.setIndividualExportSettings(props.previewUrl, {
-    backgroundColor: event.target.value,
-  });
+const handleInput = (event) => {
+  emit("update:modelValue", event.target.value);
 };
 </script>
 
 <template>
   <div class="input-group">
-    <label :for="'bg-color-' + previewUrl">背景色:</label>
+    <label>背景色:</label>
     <div class="color-picker-wrapper">
       <input
         type="color"
-        :id="'bg-color-' + previewUrl"
-        :value="exportSettings.backgroundColor || '#ffffff'"
-        @input="handleColorChange"
+        :value="modelValue"
+        @input="handleInput"
         class="color-input"
       />
-      <span class="color-code">{{
-        exportSettings.backgroundColor || "#ffffff"
-      }}</span>
+      <span class="color-code">{{ modelValue }}</span>
     </div>
   </div>
 </template>
