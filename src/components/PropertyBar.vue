@@ -265,10 +265,10 @@ watch(
 
 <style scoped>
 .property-bar {
-  display: flex;
-  flex-wrap: wrap; /* 折り返しを許可 */
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 8px 16px; /* 横の隙間と、折り返した時の縦の隙間 */
   padding: 4px 12px;
   background: var(--color-bg-inset);
@@ -276,6 +276,9 @@ watch(
   min-height: 40px; /* 高さを一定に保つ */
   font-size: 13px;
   color: #333;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .property-group {
@@ -373,6 +376,14 @@ input:disabled {
 
 /* スマートフォン向けのレスポンシブ設定 */
 @media (max-width: 768px) {
+  .property-bar {
+    grid-template-columns: repeat(1, max-content);
+    width: 100%;
+  }
+  .property-group {
+    flex-wrap: wrap; /* グループ内での折り返しを許容する */
+  }
+
   .divider {
     display: none; /* 区切り線を消す */
   }
@@ -395,6 +406,20 @@ input:disabled {
   .checkbox-group {
     flex-basis: 100%; /* 横幅を100%確保することで、強制的に改行させる */
     margin-top: 4px; /* 上の入力欄との間に少し隙間を作る */
+  }
+}
+
+@media (max-width: 560px) {
+  .property-bar {
+    grid-template-columns: 1fr;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .input-group-container {
+    flex-wrap: wrap;
+  }
+  .input-group {
+    white-space: nowrap; /* ラベルの改行を防ぐ */
   }
 }
 </style>
