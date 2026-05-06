@@ -4,6 +4,8 @@ import { useImagesStore } from "../stores/imagesStore";
 import CropperPanel from "./CropperPanel.vue";
 import CropExecuteButton from "./CropExecuteButton.vue";
 import ExportTypeSelector from "./ExportTypeSelector.vue";
+import ExportBgColorPicker from "./ExportBgColorPicker.vue";
+import { EXPORT_TYPES } from "../constants/exportTypes";
 
 const imagesStore = useImagesStore();
 </script>
@@ -25,6 +27,14 @@ const imagesStore = useImagesStore();
 
       <div class="right-selector">
         <ExportTypeSelector :file="imagesStore.globalPreviewFile" />
+        <ExportBgColorPicker
+          v-if="
+            imagesStore.getExportSettings(
+              imagesStore.globalPreviewFile.previewUrl,
+            ).exportType === EXPORT_TYPES.JPEG
+          "
+          :preview-url="imagesStore.globalPreviewFile.previewUrl"
+        />
       </div>
     </div>
   </div>
@@ -47,6 +57,7 @@ const imagesStore = useImagesStore();
 .right-selector {
   height: 100%;
   display: flex;
+  gap: 10px;
 }
 
 .right-selector > * {
