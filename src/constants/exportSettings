@@ -2,4 +2,5 @@ import { EXPORT_TYPES } from "./exportTypes";
 
 export const DEFAULT_EXPORT_SETTINGS = {
   exportType: EXPORT_TYPES.PNG,
+  backgroundColor: "#ffffff",
 };
